@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_booking/dashboard.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
+import 'api_config.dart';
 import 'register.dart';
 
 class LoginPage extends StatefulWidget {
@@ -25,10 +26,7 @@ class _LoginPageState extends State<LoginPage> {
   }
 
   Future _login() async {
-    final apiHost = Uri.base.host.isNotEmpty ? Uri.base.host : "localhost";
-    var url = Uri.parse(
-      "http://$apiHost/flutter_college_news/php_api/auth/login.php",
-    );
+    var url = Uri.parse("$apiBaseUrl/auth/login.php");
 
     var response = await http.post(
       url,
