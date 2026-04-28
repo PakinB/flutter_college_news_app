@@ -1,19 +1,43 @@
 <?php
 include("../config/db.php");
 
+
+error_reporting(0);
+ini_set('display_errors', 0);
+
+
+header('Content-Type: application/json');
+
+
 $data = json_decode(file_get_contents("php://input"), true);
 
-$name = $data['name'];
-$email = $data['email'];
-$role = "user";
-$password = password_hash($data['password'], PASSWORD_DEFAULT);
+if (!$data) {
+    echo json_encode(["status" => "error", "message" => "No input data"]);
+    exit;
+}
 
-$sql = "INSERT INTO users (name, email, password)
-        VALUES ('$name', '$email', '$password')";
+$name = $data['name'] ?? '';
+$email = $data['email'] ?? '';
+$password_raw = $data['password'] ?? '';
 
-if ($conn->query($sql)) {
+if (!$name || !$email || !$password_raw) {
+    echo json_encode(["status" => "error", "message" => "Missing fields"]);
+    exit;
+}
+
+
+$password = password_hash($password_raw, PASSWORD_DEFAULT);
+
+
+$stmt = $conn->prepare("INSERT INTO users (name, email, password) VALUES (?, ?, ?)");
+$stmt->bind_param("sss", $name, $email, $password);
+
+if ($stmt->execute()) {
     echo json_encode(["status" => "success"]);
 } else {
-    echo json_encode(["status" => "error"]);
+    echo json_encode(["status" => "error", "message" => $stmt->error]);
 }
+
+$stmt->close();
+$conn->close();
 ?>

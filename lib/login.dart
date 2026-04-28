@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_booking/dashboard.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'register.dart';
@@ -62,7 +63,7 @@ class _LoginPageState extends State<LoginPage> {
 
     Navigator.of(context).pushReplacement(
       MaterialPageRoute(
-        builder: (_) => HomePage(displayName: _emailController.text.trim()),
+        builder: (_) => DashboardPage(),
       ),
     );
   }
