@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_college_news_app/register.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
+import 'register.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -20,6 +22,40 @@ class _LoginPageState extends State<LoginPage> {
     _passwordController.dispose();
     super.dispose();
   }
+
+  Future login() async {
+  var url = Uri.parse("http://localhost/flutter_college_news/php_api/auth/login.php");
+
+  var response = await http.post(
+    url,
+    body: {
+      "email": _emailController.text,
+      "password": _passwordController.text,
+    },
+  );
+
+  if (response.statusCode == 200) {
+    var data = json.decode(response.body);
+
+    if (data["status"] == "success") {
+      // Navigator.pushReplacement(
+      //   context,
+      //   MaterialPageRoute(
+      //     builder: (context) => UserListPage(name: data["name"]),
+      //   ),
+      // );
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text("Email หรือ Password ไม่ถูกต้อง"),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+  } else {
+    print("Server Error");
+  }
+}
 
   void _login() {
     if (!_formKey.currentState!.validate()) return;
