@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_booking/dashboard.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'register.dart';
@@ -23,54 +24,51 @@ class _LoginPageState extends State<LoginPage> {
     super.dispose();
   }
 
-  Future login() async {
-  var url = Uri.parse("http://localhost/flutter_college_news/php_api/auth/login.php");
+  Future _login() async {
+    var url = Uri.parse(
+      "http://localhost/flutter_college_news/php_api/auth/login.php",
+    );
 
-  var response = await http.post(
-    url,
-    body: {
-      "email": _emailController.text,
-      "password": _passwordController.text,
-    },
-  );
+    var response = await http.post(
+      url,
+      headers: {"Content-Type": "application/json"},
+      body: jsonEncode({
+        "email": _emailController.text,
+        "password": _passwordController.text,
+      }),
+    );
 
-  if (response.statusCode == 200) {
-    var data = json.decode(response.body);
+    if (response.statusCode == 200) {
+      final data = jsonDecode(response.body);
 
-    if (data["status"] == "success") {
-      // Navigator.pushReplacement(
-      //   context,
-      //   MaterialPageRoute(
-      //     builder: (context) => UserListPage(name: data["name"]),
-      //   ),
-      // );
-    } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text("Email หรือ Password ไม่ถูกต้อง"),
-          backgroundColor: Colors.red,
-        ),
-      );
+      if (data["status"] == "success") {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => DashboardPage()),
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text("Username หรือ Password ไม่ถูกต้อง"),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
     }
-  } else {
-    print("Server Error");
   }
-}
 
-  void _login() {
+  void login() {
     if (!_formKey.currentState!.validate()) return;
 
-    Navigator.of(context).pushReplacement(
-      MaterialPageRoute(
-        builder: (_) => HomePage(displayName: _emailController.text.trim()),
-      ),
-    );
+    Navigator.of(
+      context,
+    ).pushReplacement(MaterialPageRoute(builder: (_) => DashboardPage()));
   }
 
   void _openRegister() {
-    Navigator.of(context).push(
-      MaterialPageRoute(builder: (_) => const RegisterPage()),
-    );
+    Navigator.of(
+      context,
+    ).push(MaterialPageRoute(builder: (_) => const RegisterPage()));
   }
 
   @override
@@ -92,7 +90,7 @@ class _LoginPageState extends State<LoginPage> {
                 child: Padding(
                   padding: const EdgeInsets.all(24),
                   child: Form(
-                    key: _formKey,
+                    // key: _formKey,
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
                       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -106,9 +104,7 @@ class _LoginPageState extends State<LoginPage> {
                         Text(
                           'เข้าสู่ระบบ',
                           textAlign: TextAlign.center,
-                          style: Theme.of(context)
-                              .textTheme
-                              .headlineSmall
+                          style: Theme.of(context).textTheme.headlineSmall
                               ?.copyWith(fontWeight: FontWeight.bold),
                         ),
                         const SizedBox(height: 8),
@@ -226,17 +222,17 @@ class HomePage extends StatelessWidget {
         children: [
           Text(
             'ยินดีต้อนรับ',
-            style: Theme.of(context)
-                .textTheme
-                .headlineSmall
-                ?.copyWith(fontWeight: FontWeight.bold),
+            style: Theme.of(
+              context,
+            ).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 8),
           Text(displayName, style: Theme.of(context).textTheme.bodyLarge),
           const SizedBox(height: 24),
           const _NewsPreviewCard(
             title: 'ประกาศข่าวสารล่าสุด',
-            description: 'หน้านี้เป็นตัวอย่างหลังเข้าสู่ระบบ ยังไม่เชื่อมต่อ API',
+            description:
+                'หน้านี้เป็นตัวอย่างหลังเข้าสู่ระบบ ยังไม่เชื่อมต่อ API',
             icon: Icons.campaign_outlined,
           ),
           const SizedBox(height: 12),
