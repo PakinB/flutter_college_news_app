@@ -25,7 +25,7 @@ class _RegisterPageState extends State<RegisterPage> {
 
     final response = await http.post(
       url,
-      headers: {"Content-Type": "application/json"},
+      headers: {"Content-Type": "text/plain; charset=UTF-8"},
       body: jsonEncode({
         "name": _nameController.text,
         "email": _emailController.text,
