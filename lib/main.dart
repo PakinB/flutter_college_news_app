@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
-
-import 'dashboard.dart';
+import 'login.dart';
 
 void main() {
   runApp(const MainApp());
@@ -13,19 +12,24 @@ class MainApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
-      title: 'UniAnnounce Dashboard',
+      title: 'College News',
       theme: ThemeData(
+        colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFF2563EB)),
         useMaterial3: true,
-        scaffoldBackgroundColor: const Color(0xFFF5F1E8),
-        colorScheme: ColorScheme.fromSeed(
-          seedColor: const Color(0xFF5B57D8),
-          primary: const Color(0xFF5B57D8),
-          secondary: const Color(0xFF3AA88C),
-          surface: Colors.white,
+        inputDecorationTheme: InputDecorationTheme(
+          filled: true,
+          fillColor: const Color(0xFFF8FAFC),
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(8),
+            borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
+          ),
+          enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(8),
+            borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
+          ),
         ),
-        fontFamily: 'Noto Sans Thai',
       ),
-      home: const DashboardPage(),
+      home: const LoginPage(),
     );
   }
 }
