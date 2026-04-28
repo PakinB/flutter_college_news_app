@@ -1,17 +1,7 @@
 <?php
-header("Access-Control-Allow-Origin: *");
-header("Access-Control-Allow-Headers: *");
-header("Access-Control-Allow-Methods: *");
-header('Content-Type: application/json');
-header('Access-Control-Allow-Methods: GET, POST, PUT, DELETE,OPTIONS');
-header('Access-Control-Allow-Headers: Content-Type, Authorization');
-header("Content-Type: application/json; charset=UTF-8");
+include("../config/cors.php");
 
 include("../config/db.php");
-
-if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
-    exit;
-}
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     echo json_encode([
