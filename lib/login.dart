@@ -30,7 +30,7 @@ class _LoginPageState extends State<LoginPage> {
 
     var response = await http.post(
       url,
-      headers: {"Content-Type": "application/json"},
+      headers: {"Content-Type": "text/plain; charset=UTF-8"},
       body: jsonEncode({
         "email": _emailController.text,
         "password": _passwordController.text,
