@@ -25,8 +25,9 @@ class _LoginPageState extends State<LoginPage> {
   }
 
   Future _login() async {
+    final apiHost = Uri.base.host.isNotEmpty ? Uri.base.host : "localhost";
     var url = Uri.parse(
-      "http://localhost/flutter_college_news/php_api/auth/login.php",
+      "http://$apiHost/flutter_college_news/php_api/auth/login.php",
     );
 
     var response = await http.post(
