@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_college_news_app/login.dart';
+import 'login.dart';
 
 void main() {
   runApp(const MainApp());
