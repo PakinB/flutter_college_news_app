@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'dart:convert';
+import 'package:http/http.dart' as http;
 
 class RegisterPage extends StatefulWidget {
   const RegisterPage({super.key});
@@ -15,6 +17,42 @@ class _RegisterPageState extends State<RegisterPage> {
   final _confirmPasswordController = TextEditingController();
   bool _obscurePassword = true;
 
+  String selectedFaculty = '1';
+
+  Future<void> register() async {
+    final url = Uri.parse(
+      "http://localhost/flutter_college_news/php_api/auth/register.php",
+    );
+
+    final response = await http.post(
+      url,
+      headers: {"Content-Type": "application/json"},
+      body: jsonEncode({
+        "name": _nameController.text,
+        "email": _emailController.text,
+        "password": _passwordController.text,
+        "role": "user",
+        "faculty_id": selectedFaculty,
+      }),
+    );
+
+    final data = jsonDecode(response.body);
+
+    if (data['status'] == 'success') {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text("สมัครสมาชิกสำเร็จ")));
+
+      Navigator.pop(context);
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text("Error: ${data['message'] ?? 'สมัครไม่สำเร็จ'}"),
+        ),
+      );
+    }
+  }
+
   @override
   void dispose() {
     _nameController.dispose();
@@ -24,13 +62,10 @@ class _RegisterPageState extends State<RegisterPage> {
     super.dispose();
   }
 
-  void _register() {
+  Future<void> _register() async {
     if (!_formKey.currentState!.validate()) return;
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('สมัครสมาชิกสำเร็จ')),
-    );
-    Navigator.of(context).pop();
+    await register();
   }
 
   void _backToLogin() {
@@ -70,9 +105,7 @@ class _RegisterPageState extends State<RegisterPage> {
                         Text(
                           'สมัครสมาชิก',
                           textAlign: TextAlign.center,
-                          style: Theme.of(context)
-                              .textTheme
-                              .headlineSmall
+                          style: Theme.of(context).textTheme.headlineSmall
                               ?.copyWith(fontWeight: FontWeight.bold),
                         ),
                         const SizedBox(height: 8),
@@ -167,6 +200,43 @@ class _RegisterPageState extends State<RegisterPage> {
                             return null;
                           },
                           onFieldSubmitted: (_) => _register(),
+                        ),
+                        const SizedBox(height: 16),
+                        DropdownButtonFormField(
+                          value: selectedFaculty,
+                          items: const [
+                            DropdownMenuItem(
+                              value: '1',
+                              child: Text('เทคโนโลยีสารสนเทศ'),
+                            ),
+                            DropdownMenuItem(
+                              value: '2',
+                              child: Text('นิติศาสตร์'),
+                            ),
+                            DropdownMenuItem(
+                              value: '3',
+                              child: Text('บริหารธุรกิจ'),
+                            ),
+                            DropdownMenuItem(
+                              value: '4',
+                              child: Text('ศิลปะศาสตร์'),
+                            ),
+                            DropdownMenuItem(value: '5', child: Text('บัญชี')),
+                            DropdownMenuItem(
+                              value: '6',
+                              child: Text('โลจิสติกส์และซัพพลายเชน'),
+                            ),
+                            DropdownMenuItem(
+                              value: '7',
+                              child: Text('นิเทศศาสตร์'),
+                            ),
+                          ],
+                          onChanged: (value) {
+                            setState(() {
+                              selectedFaculty = value.toString();
+                            });
+                          },
+                          decoration: const InputDecoration(labelText: "คณะ"),
                         ),
                         const SizedBox(height: 24),
                         FilledButton(
