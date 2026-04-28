@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+import 'api_config.dart';
 
 class RegisterPage extends StatefulWidget {
   const RegisterPage({super.key});
@@ -20,10 +21,7 @@ class _RegisterPageState extends State<RegisterPage> {
   String selectedFaculty = '1';
 
   Future<void> register() async {
-    final apiHost = Uri.base.host.isNotEmpty ? Uri.base.host : "localhost";
-    final url = Uri.parse(
-      "http://$apiHost/flutter_college_news/php_api/auth/register.php",
-    );
+    final url = Uri.parse("$apiBaseUrl/auth/register.php");
 
     final response = await http.post(
       url,
