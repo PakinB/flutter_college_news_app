@@ -20,8 +20,9 @@ class _RegisterPageState extends State<RegisterPage> {
   String selectedFaculty = '1';
 
   Future<void> register() async {
+    final apiHost = Uri.base.host.isNotEmpty ? Uri.base.host : "localhost";
     final url = Uri.parse(
-      "http://localhost/flutter_college_news/php_api/auth/register.php",
+      "http://$apiHost/flutter_college_news/php_api/auth/register.php",
     );
 
     final response = await http.post(

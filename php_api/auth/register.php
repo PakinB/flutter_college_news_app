@@ -1,19 +1,60 @@
 <?php
+header("Access-Control-Allow-Origin: *");
+header("Access-Control-Allow-Headers: Content-Type");
+header("Access-Control-Allow-Methods: POST, GET, OPTIONS");
+
 include("../config/db.php");
+
+if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
+    exit;
+}
+
+if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+    echo json_encode([
+        "status" => "error",
+        "message" => "Please send register data with POST JSON"
+    ]);
+    exit;
+}
 
 $data = json_decode(file_get_contents("php://input"), true);
 
-$name = $data['name'];
-$email = $data['email'];
-$role = "user";
-$password = password_hash($data['password'], PASSWORD_DEFAULT);
+if (!$data) {
+    echo json_encode(["status" => "error", "message" => "No input data"]);
+    exit;
+}
 
-$sql = "INSERT INTO users (name, email, password)
-        VALUES ('$name', '$email', '$password')";
+$name = $data['name'] ?? '';
+$email = $data['email'] ?? '';
+$password_raw = $data['password'] ?? '';
+$role = $data['role'] ?? 'user';
+$faculty_id = $data['faculty_id'] ?? null;
 
-if ($conn->query($sql)) {
+if (!$name || !$email || !$password_raw) {
+    echo json_encode(["status" => "error", "message" => "Missing fields"]);
+    exit;
+}
+
+$check = $conn->prepare("SELECT id FROM users WHERE email = ?");
+$check->bind_param("s", $email);
+$check->execute();
+$check_result = $check->get_result();
+
+if ($check_result->num_rows > 0) {
+    echo json_encode(["status" => "error", "message" => "Email already exists"]);
+    exit;
+}
+
+$password = password_hash($password_raw, PASSWORD_DEFAULT);
+
+$stmt = $conn->prepare(
+    "INSERT INTO users (name, email, password, role, faculty_id) VALUES (?, ?, ?, ?, ?)"
+);
+$stmt->bind_param("ssssi", $name, $email, $password, $role, $faculty_id);
+
+if ($stmt->execute()) {
     echo json_encode(["status" => "success"]);
 } else {
-    echo json_encode(["status" => "error"]);
+    echo json_encode(["status" => "error", "message" => $stmt->error]);
 }
 ?>
