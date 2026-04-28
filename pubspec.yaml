@@ -1,14 +1,16 @@
-name: flutter_college_news_app
+name: flutter_booking
 description: "A new Flutter project."
 publish_to: 'none'
-version: 0.1.0+1
+version: 0.1.0
 
 environment:
-  sdk: ^3.11.4
+  sdk: ^3.10.7
 
 dependencies:
   flutter:
     sdk: flutter
+  http: ^1.2.0        
+  image_picker: ^1.0.7
 
 dev_dependencies:
   flutter_test:
@@ -17,3 +19,5 @@ dev_dependencies:
 
 flutter:
   uses-material-design: true
+  assets:
+    - php_api/images/
