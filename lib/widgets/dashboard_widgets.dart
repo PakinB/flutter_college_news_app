@@ -391,8 +391,9 @@ Future<Announcement?> showAnnouncementEditor({
   final TextEditingController content = TextEditingController(text: existing?.content ?? '');
   final TextEditingController expiredAt = TextEditingController(text: existing?.expiredAt == '-' ? '' : existing?.expiredAt ?? '');
 
-  String priority = existing?.priority ?? 'normal';
-  String status = existing?.status ?? (user.isAdmin ? 'published' : 'pending');
+  final List<Faculty> facultyOptions = _uniqueFacultiesById(faculties);
+  String priority = _editorPriority(existing?.priority);
+  String status = _editorStatus(existing?.status ?? (user.isAdmin ? 'published' : 'pending'));
   int? targetFacultyId = existing?.targetFacultyId;
   String targetType = existing?.targetType ?? 'all';
   String targetValue = targetType == 'all' || targetFacultyId == null
@@ -400,7 +401,7 @@ Future<Announcement?> showAnnouncementEditor({
       : 'faculty:$targetFacultyId';
   final Set<String> targetOptions = <String>{
     'all',
-    ...faculties.map((Faculty item) => 'faculty:${item.id}'),
+    ...facultyOptions.map((Faculty item) => 'faculty:${item.id}'),
   };
   if (!targetOptions.contains(targetValue)) {
     targetValue = 'all';
@@ -412,7 +413,7 @@ Future<Announcement?> showAnnouncementEditor({
     targetType = 'faculty';
     targetFacultyId = user.facultyId;
     targetValue = 'faculty:${user.facultyId}';
-    status = existing?.status ?? 'pending';
+    status = _editorStatus(existing?.status ?? 'pending');
   }
 
   final Announcement? result = await showDialog<Announcement>(
@@ -451,7 +452,7 @@ Future<Announcement?> showAnnouncementEditor({
                         initialValue: status,
                         decoration: const InputDecoration(labelText: 'สถานะ'),
                         items: <DropdownMenuItem<String>>[
-                          if (user.isAdmin) const DropdownMenuItem(value: 'published', child: Text('เผยแพร่แล้ว')),
+                          if (user.isAdmin || status == 'published') const DropdownMenuItem(value: 'published', child: Text('เผยแพร่แล้ว')),
                           const DropdownMenuItem(value: 'pending', child: Text('รออนุมัติ')),
                           const DropdownMenuItem(value: 'draft', child: Text('ฉบับร่าง')),
                         ],
@@ -467,7 +468,7 @@ Future<Announcement?> showAnnouncementEditor({
                     decoration: const InputDecoration(labelText: 'กระจายข่าวไปยังคณะ'),
                     items: <DropdownMenuItem<String>>[
                       const DropdownMenuItem<String>(value: 'all', child: Text('ทุกคณะ')),
-                      ...faculties.map(
+                      ...facultyOptions.map(
                         (Faculty item) => DropdownMenuItem<String>(
                           value: 'faculty:${item.id}',
                           child: Text(item.name),
@@ -488,7 +489,7 @@ Future<Announcement?> showAnnouncementEditor({
                   InputDecorator(
                     decoration: const InputDecoration(labelText: 'คณะ'),
                     child: Text(
-                      faculties.where((Faculty item) => item.id == user.facultyId).firstOrNull?.name ?? 'คณะของผู้ใช้',
+                      facultyOptions.where((Faculty item) => item.id == user.facultyId).firstOrNull?.name ?? 'คณะของผู้ใช้',
                     ),
                   ),
                 const SizedBox(height: 14),
@@ -514,7 +515,7 @@ Future<Announcement?> showAnnouncementEditor({
                         priority: priority,
                         targetType: targetType,
                         targetFacultyId: targetFacultyId,
-                        targetFacultyName: faculties.where((Faculty item) => item.id == targetFacultyId).firstOrNull?.name ?? 'ทุกคณะ',
+                        targetFacultyName: facultyOptions.where((Faculty item) => item.id == targetFacultyId).firstOrNull?.name ?? 'ทุกคณะ',
                         createdAt: existing?.createdAt ?? '-',
                         updatedAt: DateTime.now().toIso8601String(),
                         expiredAt: expiredAt.text.trim().isEmpty ? '-' : expiredAt.text.trim(),
@@ -537,6 +538,34 @@ Future<Announcement?> showAnnouncementEditor({
   content.dispose();
   expiredAt.dispose();
   return result;
+}
+
+List<Faculty> _uniqueFacultiesById(List<Faculty> faculties) {
+  final Set<int> seenIds = <int>{};
+  return faculties.where((Faculty item) => seenIds.add(item.id)).toList();
+}
+
+String _editorPriority(String? value) {
+  switch ((value ?? 'normal').trim().toLowerCase()) {
+    case 'urgent':
+    case 'high':
+      return 'urgent';
+    default:
+      return 'normal';
+  }
+}
+
+String _editorStatus(String? value) {
+  switch ((value ?? 'draft').trim().toLowerCase()) {
+    case 'published':
+    case 'publish':
+      return 'published';
+    case 'pending':
+    case 'waiting':
+      return 'pending';
+    default:
+      return 'draft';
+  }
 }
 
 class _DialogText extends StatelessWidget {
