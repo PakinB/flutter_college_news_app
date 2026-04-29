@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import 'models/announcement.dart';
 import 'models/app_user.dart';
@@ -25,18 +26,15 @@ class DashboardPage extends StatefulWidget {
 
 class _DashboardPageState extends State<DashboardPage> {
   final ApiService _api = const ApiService();
+  static const Duration _announcementPopupCooldown = Duration(hours: 1);
 
   late final AppUser currentUser =
       widget.currentUser ??
-      const AppUser(
-        id: 0,
-        name: 'Admin',
-        email: '-',
-        role: 'admin',
-      );
+      const AppUser(id: 0, name: 'Admin', email: '-', role: 'admin');
 
   bool _showMenu = false;
   bool _isLoading = true;
+  bool _isPopupVisible = false;
   String? _error;
   String _activeMenu = 'แดชบอร์ด';
 
@@ -77,6 +75,7 @@ class _DashboardPageState extends State<DashboardPage> {
         _users = users;
         _isLoading = false;
       });
+      _scheduleLatestAnnouncementPopup();
     } catch (error) {
       if (!mounted) return;
       setState(() {
@@ -87,37 +86,57 @@ class _DashboardPageState extends State<DashboardPage> {
   }
 
   Future<void> _createNews() async {
-    final Announcement? draft = await showAnnouncementEditor(
+    final AnnouncementEditorResult? result = await showAnnouncementEditor(
       context: context,
       user: currentUser,
       faculties: _faculties,
     );
-    if (draft == null) return;
+    if (result == null) return;
 
-    await _api.createAnnouncement(draft.toPayload(createdBy: currentUser.id));
+    final int announcementId = await _api.createAnnouncement(
+      result.announcement.toPayload(createdBy: currentUser.id),
+    );
+    if (result.imageFile != null) {
+      await _api.uploadAnnouncementImage(
+        announcementId: announcementId,
+        bytes: await result.imageFile!.readAsBytes(),
+        fileName: result.imageFile!.name,
+        replaceExisting: true,
+      );
+    }
     await _loadData();
   }
 
   Future<void> _editNews(Announcement announcement) async {
-    final Announcement? updated = await showAnnouncementEditor(
+    final AnnouncementEditorResult? result = await showAnnouncementEditor(
       context: context,
       user: currentUser,
       faculties: _faculties,
       existing: announcement,
     );
-    if (updated == null) return;
+    if (result == null) return;
 
     await _api.updateAnnouncement(
       announcement.id,
-      updated.toPayload(createdBy: currentUser.id),
+      result.announcement.toPayload(createdBy: currentUser.id),
     );
+    if (result.imageFile != null) {
+      await _api.uploadAnnouncementImage(
+        announcementId: announcement.id,
+        bytes: await result.imageFile!.readAsBytes(),
+        fileName: result.imageFile!.name,
+        replaceExisting: true,
+      );
+    }
     await _loadData();
   }
 
   Future<void> _approveNews(Announcement announcement) async {
     await _api.updateAnnouncement(
       announcement.id,
-      announcement.copyWith(status: 'published').toPayload(createdBy: currentUser.id),
+      announcement
+          .copyWith(status: 'published')
+          .toPayload(createdBy: currentUser.id),
     );
     await _loadData();
   }
@@ -130,8 +149,14 @@ class _DashboardPageState extends State<DashboardPage> {
           title: const Text('ยืนยันการลบข่าว'),
           content: Text('ต้องการลบ "${announcement.title}" ใช่หรือไม่?'),
           actions: <Widget>[
-            TextButton(onPressed: () => Navigator.of(context).pop(false), child: const Text('ยกเลิก')),
-            FilledButton(onPressed: () => Navigator.of(context).pop(true), child: const Text('ลบ')),
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(false),
+              child: const Text('ยกเลิก'),
+            ),
+            FilledButton(
+              onPressed: () => Navigator.of(context).pop(true),
+              child: const Text('ลบ'),
+            ),
           ],
         );
       },
@@ -164,6 +189,67 @@ class _DashboardPageState extends State<DashboardPage> {
     return _announcements.where((Announcement item) {
       return item.isAllFaculty || item.targetFacultyId == currentUser.facultyId;
     }).toList();
+  }
+
+  Future<void> _scheduleLatestAnnouncementPopup() async {
+    if (!mounted || _isLoading || _error != null || _isPopupVisible) return;
+
+    final Announcement? latestAnnouncement = _latestAnnouncementForPopup;
+    if (latestAnnouncement == null) return;
+
+    final SharedPreferences preferences = await SharedPreferences.getInstance();
+    final String cooldownKey = _announcementPopupCooldownKey;
+    final DateTime? closedAt = DateTime.tryParse(
+      preferences.getString(cooldownKey) ?? '',
+    );
+    final DateTime now = DateTime.now();
+
+    if (closedAt != null &&
+        now.difference(closedAt) < _announcementPopupCooldown) {
+      return;
+    }
+
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      if (!mounted || _isPopupVisible) return;
+      _isPopupVisible = true;
+      await showLatestAnnouncementPopup(
+        context: context,
+        announcement: latestAnnouncement,
+      );
+      _isPopupVisible = false;
+
+      await preferences.setString(
+        cooldownKey,
+        DateTime.now().toIso8601String(),
+      );
+    });
+  }
+
+  String get _announcementPopupCooldownKey {
+    return 'latest_announcement_popup_closed_at_${currentUser.id}_${currentUser.role}';
+  }
+
+  Announcement? get _latestAnnouncementForPopup {
+    final List<Announcement> publishedAnnouncements = _visibleAnnouncements
+        .where((Announcement item) => item.isPublished && !item.isExpired)
+        .toList();
+    if (publishedAnnouncements.isEmpty) return null;
+
+    publishedAnnouncements.sort((Announcement a, Announcement b) {
+      final DateTime aDate = _announcementTimestamp(a);
+      final DateTime bDate = _announcementTimestamp(b);
+      final int dateCompare = bDate.compareTo(aDate);
+      if (dateCompare != 0) return dateCompare;
+      return b.id.compareTo(a.id);
+    });
+
+    return publishedAnnouncements.first;
+  }
+
+  DateTime _announcementTimestamp(Announcement announcement) {
+    return DateTime.tryParse(announcement.createdAt) ??
+        DateTime.tryParse(announcement.updatedAt) ??
+        DateTime.fromMillisecondsSinceEpoch(0);
   }
 
   String get _currentUserFacultyName {
@@ -206,20 +292,28 @@ class _DashboardPageState extends State<DashboardPage> {
 
     return <AppMenuItem>[
       if (!currentUser.isStudent) item(Icons.dashboard_rounded, 'แดชบอร์ด'),
-      item(Icons.article_outlined, 'ข่าวทั้งหมด', count: '${_visibleAnnouncements.length}'),
+      item(
+        Icons.article_outlined,
+        'ข่าวทั้งหมด',
+        count: '${_visibleAnnouncements.length}',
+      ),
       if (currentUser.canManageSystem)
         item(
           Icons.access_time_rounded,
           'รออนุมัติ',
-          count: '${_announcements.where((Announcement item) => item.isPending).length}',
+          count:
+              '${_announcements.where((Announcement item) => item.isPending).length}',
           countColor: const Color(0xFFF3B7BC),
         ),
       if (currentUser.canManageSystem)
         item(Icons.calendar_today_outlined, 'ข่าวหมดอายุ'),
       if (currentUser.canManageSystem)
-        item(Icons.people_outline_rounded, 'จัดการผู้ใช้', section: 'จัดการระบบ'),
-      if (currentUser.canManageSystem)
-        item(Icons.school_outlined, 'จัดการคณะ'),
+        item(
+          Icons.people_outline_rounded,
+          'จัดการผู้ใช้',
+          section: 'จัดการระบบ',
+        ),
+      if (currentUser.canManageSystem) item(Icons.school_outlined, 'จัดการคณะ'),
     ];
   }
 
@@ -309,7 +403,9 @@ class _DashboardPageState extends State<DashboardPage> {
                   leading: IconButton(
                     tooltip: _showMenu ? 'ปิดเมนู' : 'เมนู',
                     onPressed: () => setState(() => _showMenu = !_showMenu),
-                    icon: Icon(_showMenu ? Icons.close_rounded : Icons.menu_rounded),
+                    icon: Icon(
+                      _showMenu ? Icons.close_rounded : Icons.menu_rounded,
+                    ),
                   ),
                   title: Text(_showMenu ? 'เมนู' : _activeMenu),
                   actions: <Widget>[
@@ -347,7 +443,9 @@ class _DashboardPageState extends State<DashboardPage> {
                         child: Container(
                           alignment: Alignment.topCenter,
                           decoration: const BoxDecoration(
-                            border: Border(left: BorderSide(color: Color(0xFFE0D7C8))),
+                            border: Border(
+                              left: BorderSide(color: Color(0xFFE0D7C8)),
+                            ),
                           ),
                           child: _activePage(),
                         ),
@@ -357,9 +455,7 @@ class _DashboardPageState extends State<DashboardPage> {
                 : Stack(
                     alignment: Alignment.topLeft,
                     children: <Widget>[
-                      Positioned.fill(
-                        child: _activePage(),
-                      ),
+                      Positioned.fill(child: _activePage()),
                       if (_showMenu) ...<Widget>[
                         Positioned.fill(
                           child: Row(
@@ -381,7 +477,8 @@ class _DashboardPageState extends State<DashboardPage> {
                               Expanded(
                                 child: GestureDetector(
                                   behavior: HitTestBehavior.opaque,
-                                  onTap: () => setState(() => _showMenu = false),
+                                  onTap: () =>
+                                      setState(() => _showMenu = false),
                                   child: Container(color: Colors.black26),
                                 ),
                               ),

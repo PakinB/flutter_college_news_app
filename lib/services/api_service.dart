@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:typed_data';
 
 import 'package:http/http.dart' as http;
 
@@ -15,8 +16,12 @@ class ApiService {
     String? status,
   }) async {
     final Map<String, String> query = <String, String>{};
-    if (status != null) query['status'] = status;
-    if (visibleFacultyId != null) query['visible_faculty_id'] = '$visibleFacultyId';
+    if (status != null) {
+      query['status'] = status;
+    }
+    if (visibleFacultyId != null) {
+      query['visible_faculty_id'] = '$visibleFacultyId';
+    }
 
     final List<dynamic> rows = await _getList('announcements/index.php', query);
     return rows
@@ -32,7 +37,10 @@ class ApiService {
 
   Future<List<Faculty>> fetchFaculties() async {
     final List<dynamic> rows = await _getList('faculties/index.php');
-    return rows.whereType<Map<String, dynamic>>().map(Faculty.fromJson).toList();
+    return rows
+        .whereType<Map<String, dynamic>>()
+        .map(Faculty.fromJson)
+        .toList();
   }
 
   Future<int> createAnnouncement(Map<String, dynamic> payload) async {
@@ -46,6 +54,38 @@ class ApiService {
 
   Future<void> updateAnnouncement(int id, Map<String, dynamic> payload) async {
     await _sendJson('PUT', 'announcements/index.php?id=$id', payload);
+  }
+
+  Future<int> uploadAnnouncementImage({
+    required int announcementId,
+    required Uint8List bytes,
+    required String fileName,
+    bool replaceExisting = false,
+  }) async {
+    final Uri url = Uri.parse('$apiBaseUrl/attachments/index.php');
+    final http.MultipartRequest request = http.MultipartRequest('POST', url)
+      ..fields['announcement_id'] = '$announcementId'
+      ..fields['replace_existing'] = replaceExisting ? '1' : '0'
+      ..files.add(
+        http.MultipartFile.fromBytes('file', bytes, filename: fileName),
+      );
+
+    final http.StreamedResponse streamedResponse = await request.send();
+    final http.Response response = await http.Response.fromStream(
+      streamedResponse,
+    );
+
+    if (response.statusCode < 200 || response.statusCode >= 300) {
+      throw Exception('Image upload failed: ${response.statusCode}');
+    }
+
+    final Map<String, dynamic> body =
+        jsonDecode(response.body) as Map<String, dynamic>;
+    if (body['status'] != 'success') {
+      throw Exception(body['message'] ?? 'Image upload error');
+    }
+
+    return int.tryParse('${body['id'] ?? 0}') ?? 0;
   }
 
   Future<void> deleteAnnouncement(int id) async {
@@ -98,10 +138,18 @@ class ApiService {
 
     switch (method) {
       case 'POST':
-        response = await http.post(url, headers: _headers, body: jsonEncode(payload));
+        response = await http.post(
+          url,
+          headers: _headers,
+          body: jsonEncode(payload),
+        );
         break;
       case 'PUT':
-        response = await http.put(url, headers: _headers, body: jsonEncode(payload));
+        response = await http.put(
+          url,
+          headers: _headers,
+          body: jsonEncode(payload),
+        );
         break;
       case 'DELETE':
         response = await http.delete(url);
@@ -114,7 +162,8 @@ class ApiService {
       throw Exception('Request failed: ${response.statusCode}');
     }
 
-    final Map<String, dynamic> body = jsonDecode(response.body) as Map<String, dynamic>;
+    final Map<String, dynamic> body =
+        jsonDecode(response.body) as Map<String, dynamic>;
     if (body['status'] != 'success') {
       throw Exception(body['message'] ?? 'API error');
     }

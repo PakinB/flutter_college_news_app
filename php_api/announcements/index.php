@@ -5,6 +5,41 @@ require_once "../config/helpers.php";
 $method = $_SERVER["REQUEST_METHOD"];
 $id = get_query_int("id");
 
+function attach_announcement_files($conn, &$announcements) {
+    if (empty($announcements)) {
+        return;
+    }
+
+    $ids = array_map(function ($row) {
+        return (int)$row["id"];
+    }, $announcements);
+    $placeholders = implode(",", array_fill(0, count($ids), "?"));
+    $types = str_repeat("i", count($ids));
+
+    $stmt = $conn->prepare(
+        "SELECT id, announcement_id, file_url, file_type, uploaded_at
+         FROM attachments
+         WHERE announcement_id IN ($placeholders)
+         ORDER BY id ASC"
+    );
+    $stmt->bind_param($types, ...$ids);
+    $stmt->execute();
+
+    $attachments_by_announcement = [];
+    foreach (db_fetch_all($stmt->get_result()) as $attachment) {
+        $announcement_id = (int)$attachment["announcement_id"];
+        if (!isset($attachments_by_announcement[$announcement_id])) {
+            $attachments_by_announcement[$announcement_id] = [];
+        }
+        $attachments_by_announcement[$announcement_id][] = $attachment;
+    }
+
+    foreach ($announcements as &$announcement) {
+        $announcement_id = (int)$announcement["id"];
+        $announcement["attachments"] = $attachments_by_announcement[$announcement_id] ?? [];
+    }
+}
+
 if ($method === "GET") {
     if ($id) {
         $stmt = $conn->prepare(
@@ -53,7 +88,10 @@ if ($method === "GET") {
     $stmt->bind_param("ssiiii", $status, $status, $target_faculty_id, $target_faculty_id, $visible_faculty_id, $visible_faculty_id);
     $stmt->execute();
 
-    send_json(["status" => "success", "data" => db_fetch_all($stmt->get_result())]);
+    $announcements = db_fetch_all($stmt->get_result());
+    attach_announcement_files($conn, $announcements);
+
+    send_json(["status" => "success", "data" => $announcements]);
 }
 
 if ($method === "POST") {
