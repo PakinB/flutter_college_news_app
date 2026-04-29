@@ -37,6 +37,7 @@ if ($method === "GET") {
 
     $status = $_GET["status"] ?? null;
     $target_faculty_id = get_query_int("target_faculty_id");
+    $visible_faculty_id = get_query_int("visible_faculty_id");
 
     $sql =
         "SELECT a.*, u.name AS creator_name, f.name AS target_faculty_name
@@ -45,10 +46,11 @@ if ($method === "GET") {
          LEFT JOIN faculties f ON f.id = a.target_faculty_id
          WHERE (? IS NULL OR a.status = ?)
            AND (? IS NULL OR a.target_faculty_id = ?)
+           AND (? IS NULL OR a.target_type = 'all' OR a.target_faculty_id = ?)
          ORDER BY a.created_at DESC";
 
     $stmt = $conn->prepare($sql);
-    $stmt->bind_param("ssii", $status, $status, $target_faculty_id, $target_faculty_id);
+    $stmt->bind_param("ssiiii", $status, $status, $target_faculty_id, $target_faculty_id, $visible_faculty_id, $visible_faculty_id);
     $stmt->execute();
 
     send_json(["status" => "success", "data" => db_fetch_all($stmt->get_result())]);
