@@ -114,7 +114,7 @@ class _RegisterPageState extends State<RegisterPage> {
                         ),
                         const SizedBox(height: 8),
                         Text(
-                          'สร้างบัญชีเพื่อใช้งานระบบข่าวสารวิทยาลัย',
+                          'สร้างบัญชีเพื่อใช้งานระบบข่าวสารมหาวิทยาลัย',
                           textAlign: TextAlign.center,
                           style: Theme.of(context).textTheme.bodyMedium,
                         ),
