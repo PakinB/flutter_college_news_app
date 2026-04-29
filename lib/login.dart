@@ -5,7 +5,7 @@ import 'dart:convert';
 import 'register.dart';
 
 const _loginApiUrl =
-    'https://localhost/flutter_college_news_app/php_api/auth/login.php';
+    'http://localhost/flutter_college_news_app/php_api/auth/login.php';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});

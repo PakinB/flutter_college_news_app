@@ -22,14 +22,19 @@ $name = $data['name'] ?? '';
 $email = $data['email'] ?? '';
 $password_raw = $data['password'] ?? '';
 $role = $data['role'] ?? 'user';
-$faculty_id = $data['faculty_id'] ?? null;
+$faculty_id = isset($data['faculty_id']) ? (int)$data['faculty_id'] : null;
 
-if (!$name || !$email || !$password_raw) {
+if (!$name || !$email || !$password_raw || !$faculty_id) {
     echo json_encode(["status" => "error", "message" => "Missing fields"]);
     exit;
 }
 
 $check = $conn->prepare("SELECT id FROM users WHERE email = ?");
+if (!$check) {
+    echo json_encode(["status" => "error", "message" => $conn->error]);
+    exit;
+}
+
 $check->bind_param("s", $email);
 $check->execute();
 $check_result = $check->get_result();
@@ -44,10 +49,15 @@ $password = password_hash($password_raw, PASSWORD_DEFAULT);
 $stmt = $conn->prepare(
     "INSERT INTO users (name, email, password, role, faculty_id) VALUES (?, ?, ?, ?, ?)"
 );
+if (!$stmt) {
+    echo json_encode(["status" => "error", "message" => $conn->error]);
+    exit;
+}
+
 $stmt->bind_param("ssssi", $name, $email, $password, $role, $faculty_id);
 
 if ($stmt->execute()) {
-    echo json_encode(["status" => "success"]);
+    echo json_encode(["status" => "success", "user_id" => $stmt->insert_id]);
 } else {
     echo json_encode(["status" => "error", "message" => $stmt->error]);
 }
