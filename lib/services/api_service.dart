@@ -90,7 +90,10 @@ class ApiService {
     Map<String, String>? query,
     Map<String, dynamic>? payload,
   }) async {
-    final Uri url = Uri.parse('$apiBaseUrl/$path').replace(queryParameters: query);
+    final Uri baseUrl = Uri.parse('$apiBaseUrl/$path');
+    final Uri url = query == null || query.isEmpty
+        ? baseUrl
+        : baseUrl.replace(queryParameters: query);
     final http.Response response;
 
     switch (method) {

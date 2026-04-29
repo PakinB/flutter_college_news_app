@@ -9,6 +9,7 @@ import 'pages/expired_news_page.dart';
 import 'pages/faculties_page.dart';
 import 'pages/pending_news_page.dart';
 import 'pages/users_page.dart';
+import 'login.dart';
 import 'services/api_service.dart';
 import 'widgets/app_menu.dart';
 import 'widgets/dashboard_widgets.dart';
@@ -149,11 +150,29 @@ class _DashboardPageState extends State<DashboardPage> {
     await _loadData();
   }
 
+  void _logout() {
+    Navigator.of(context).pushAndRemoveUntil(
+      MaterialPageRoute<void>(builder: (_) => const LoginPage()),
+      (Route<dynamic> route) => false,
+    );
+  }
+
   List<Announcement> get _visibleAnnouncements {
     if (currentUser.canManageSystem) return _announcements;
     return _announcements.where((Announcement item) {
       return item.isAllFaculty || item.targetFacultyId == currentUser.facultyId;
     }).toList();
+  }
+
+  String get _currentUserFacultyName {
+    final int? facultyId = currentUser.facultyId;
+    if (facultyId == null) return '-';
+
+    for (final Faculty faculty in _faculties) {
+      if (faculty.id == facultyId) return faculty.name;
+    }
+
+    return 'ไม่พบคณะ';
   }
 
   List<AppMenuItem> _menuItems() {
@@ -298,37 +317,76 @@ class _DashboardPageState extends State<DashboardPage> {
                         onPressed: _createNews,
                         icon: const Icon(Icons.add_rounded),
                       ),
+                    IconButton(
+                      tooltip: 'ออกจากระบบ',
+                      onPressed: _logout,
+                      icon: const Icon(Icons.logout_rounded),
+                    ),
                   ],
                 ),
           body: SafeArea(
             top: isDesktop,
-            child: !isDesktop && _showMenu
-                ? AppMenu(
-                    items: items,
-                    userName: currentUser.name,
-                    userRole: currentUser.displayRole,
-                    userInitials: currentUser.initials,
-                  )
-                : Row(
+            child: isDesktop
+                ? Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: <Widget>[
-                      if (isDesktop)
-                        SizedBox(
-                          width: 264,
-                          child: AppMenu(
-                            items: items,
-                            userName: currentUser.name,
-                            userRole: currentUser.displayRole,
-                            userInitials: currentUser.initials,
-                          ),
+                      SizedBox(
+                        width: 264,
+                        child: AppMenu(
+                          items: items,
+                          userName: currentUser.name,
+                          userRole: currentUser.displayRole,
+                          userFaculty: _currentUserFacultyName,
+                          userInitials: currentUser.initials,
+                          onLogout: _logout,
                         ),
+                      ),
                       Expanded(
                         child: Container(
+                          alignment: Alignment.topCenter,
                           decoration: const BoxDecoration(
                             border: Border(left: BorderSide(color: Color(0xFFE0D7C8))),
                           ),
                           child: _activePage(),
                         ),
                       ),
+                    ],
+                  )
+                : Stack(
+                    alignment: Alignment.topLeft,
+                    children: <Widget>[
+                      Positioned.fill(
+                        child: _activePage(),
+                      ),
+                      if (_showMenu) ...<Widget>[
+                        Positioned.fill(
+                          child: Row(
+                            children: <Widget>[
+                              SizedBox(
+                                width: constraints.maxWidth * 0.85,
+                                child: Material(
+                                  elevation: 12,
+                                  child: AppMenu(
+                                    items: items,
+                                    userName: currentUser.name,
+                                    userRole: currentUser.displayRole,
+                                    userFaculty: _currentUserFacultyName,
+                                    userInitials: currentUser.initials,
+                                    onLogout: _logout,
+                                  ),
+                                ),
+                              ),
+                              Expanded(
+                                child: GestureDetector(
+                                  behavior: HitTestBehavior.opaque,
+                                  onTap: () => setState(() => _showMenu = false),
+                                  child: Container(color: Colors.black26),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
                     ],
                   ),
           ),

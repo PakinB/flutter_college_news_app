@@ -21,7 +21,10 @@ if (!$data) {
 $name = $data['name'] ?? '';
 $email = $data['email'] ?? '';
 $password_raw = $data['password'] ?? '';
-$role = $data['role'] ?? 'user';
+$role = $data['role'] ?? 'student';
+if ($role === 'user') {
+    $role = 'student';
+}
 $faculty_id = isset($data['faculty_id']) ? (int)$data['faculty_id'] : null;
 
 if (!$name || !$email || !$password_raw || !$faculty_id) {

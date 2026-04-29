@@ -158,6 +158,7 @@ class AnnouncementCard extends StatelessWidget {
     required this.onEdit,
     required this.onApprove,
     required this.onDelete,
+    required this.onView,
   });
 
   final Announcement announcement;
@@ -166,16 +167,22 @@ class AnnouncementCard extends StatelessWidget {
   final VoidCallback onEdit;
   final VoidCallback onApprove;
   final VoidCallback onDelete;
+  final VoidCallback onView;
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
+    return Material(
+      color: Colors.white,
+      borderRadius: BorderRadius.circular(8),
+      child: InkWell(
+        onTap: onView,
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: const Color(0xFFDBD0BF)),
-      ),
-      child: IntrinsicHeight(
+        child: Container(
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(8),
+            border: Border.all(color: const Color(0xFFDBD0BF)),
+          ),
+          child: IntrinsicHeight(
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: <Widget>[
@@ -224,6 +231,7 @@ class AnnouncementCard extends StatelessWidget {
                         Text(announcement.author, style: const TextStyle(fontWeight: FontWeight.w700)),
                         Text('แก้ไขล่าสุด: ${announcement.updatedAt}'),
                         Text('หมดอายุ: ${announcement.expiredAt}'),
+                        const Text('กดเพื่อดูรายละเอียด', style: TextStyle(color: Color(0xFF4E49B7), fontWeight: FontWeight.w700)),
                       ],
                     ),
                     if (canEdit || canApprove) ...<Widget>[
@@ -259,6 +267,96 @@ class AnnouncementCard extends StatelessWidget {
             ),
           ],
         ),
+      ),
+        ),
+      ),
+    );
+  }
+}
+
+Future<void> showAnnouncementDetails({
+  required BuildContext context,
+  required Announcement announcement,
+}) {
+  return showDialog<void>(
+    context: context,
+    barrierColor: Colors.black45,
+    builder: (BuildContext context) {
+      return DashboardDialog(
+        title: 'รายละเอียดข่าว',
+        maxWidth: 760,
+        body: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: <Widget>[
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: <Widget>[
+                _TagPill(label: announcement.priorityLabel, color: announcement.isUrgent ? const Color(0xFFF6C5C3) : const Color(0xFFE3DED4)),
+                _TagPill(label: announcement.statusLabel, color: announcement.isPending ? const Color(0xFFF7D4A7) : const Color(0xFFCDE8B3)),
+                _TagPill(label: announcement.targetLabel, color: const Color(0xFFBBD5F2)),
+              ],
+            ),
+            const SizedBox(height: 14),
+            Text(
+              announcement.title,
+              style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w800, height: 1.35),
+            ),
+            if (announcement.summary.isNotEmpty) ...<Widget>[
+              const SizedBox(height: 10),
+              Text(
+                announcement.summary,
+                style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: Color(0xFF555147)),
+              ),
+            ],
+            const SizedBox(height: 14),
+            Text(
+              announcement.content,
+              style: const TextStyle(fontSize: 16, height: 1.65, color: Color(0xFF2D2A24)),
+            ),
+            const SizedBox(height: 18),
+            const Divider(height: 1),
+            const SizedBox(height: 12),
+            _DetailLine(label: 'ผู้ประกาศ', value: announcement.author),
+            _DetailLine(label: 'เผยแพร่/สร้างเมื่อ', value: announcement.createdAt),
+            _DetailLine(label: 'แก้ไขล่าสุด', value: announcement.updatedAt),
+            _DetailLine(label: 'หมดอายุ', value: announcement.expiredAt),
+            _DetailLine(label: 'กลุ่มเป้าหมาย', value: announcement.targetLabel),
+          ],
+        ),
+        footer: Row(
+          mainAxisAlignment: MainAxisAlignment.end,
+          children: <Widget>[
+            FilledButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('ปิด'),
+            ),
+          ],
+        ),
+      );
+    },
+  );
+}
+
+class _DetailLine extends StatelessWidget {
+  const _DetailLine({required this.label, required this.value});
+
+  final String label;
+  final String value;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          SizedBox(
+            width: 130,
+            child: Text(label, style: const TextStyle(fontWeight: FontWeight.w800)),
+          ),
+          Expanded(child: Text(value)),
+        ],
       ),
     );
   }
@@ -297,10 +395,23 @@ Future<Announcement?> showAnnouncementEditor({
   String status = existing?.status ?? (user.isAdmin ? 'published' : 'pending');
   int? targetFacultyId = existing?.targetFacultyId;
   String targetType = existing?.targetType ?? 'all';
+  String targetValue = targetType == 'all' || targetFacultyId == null
+      ? 'all'
+      : 'faculty:$targetFacultyId';
+  final Set<String> targetOptions = <String>{
+    'all',
+    ...faculties.map((Faculty item) => 'faculty:${item.id}'),
+  };
+  if (!targetOptions.contains(targetValue)) {
+    targetValue = 'all';
+    targetType = 'all';
+    targetFacultyId = null;
+  }
 
   if (user.isTeacher) {
     targetType = 'faculty';
     targetFacultyId = user.facultyId;
+    targetValue = 'faculty:${user.facultyId}';
     status = existing?.status ?? 'pending';
   }
 
@@ -351,17 +462,25 @@ Future<Announcement?> showAnnouncementEditor({
                 ),
                 const SizedBox(height: 14),
                 if (user.isPr || user.isAdmin)
-                  DropdownButtonFormField<int?>(
-                    initialValue: targetType == 'all' ? null : targetFacultyId,
+                  DropdownButtonFormField<String>(
+                    initialValue: targetValue,
                     decoration: const InputDecoration(labelText: 'กระจายข่าวไปยังคณะ'),
-                    items: <DropdownMenuItem<int?>>[
-                      const DropdownMenuItem<int?>(value: null, child: Text('ทุกคณะ')),
-                      ...faculties.map((Faculty item) => DropdownMenuItem<int?>(value: item.id, child: Text(item.name))),
+                    items: <DropdownMenuItem<String>>[
+                      const DropdownMenuItem<String>(value: 'all', child: Text('ทุกคณะ')),
+                      ...faculties.map(
+                        (Faculty item) => DropdownMenuItem<String>(
+                          value: 'faculty:${item.id}',
+                          child: Text(item.name),
+                        ),
+                      ),
                     ],
-                    onChanged: (int? value) {
+                    onChanged: (String? value) {
                       setDialogState(() {
-                        targetFacultyId = value;
-                        targetType = value == null ? 'all' : 'faculty';
+                        targetValue = value ?? 'all';
+                        targetType = targetValue == 'all' ? 'all' : 'faculty';
+                        targetFacultyId = targetType == 'all'
+                            ? null
+                            : int.tryParse(targetValue.replaceFirst('faculty:', ''));
                       });
                     },
                   )
