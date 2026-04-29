@@ -27,12 +27,14 @@ class AppMenu extends StatelessWidget {
     this.userName = 'อรรถกร กิติ',
     this.userRole = 'Admin',
     this.userInitials = 'AK',
+    this.closeOnTap = false,
   });
 
   final List<AppMenuItem> items;
   final String userName;
   final String userRole;
   final String userInitials;
+  final bool closeOnTap;
 
   @override
   Widget build(BuildContext context) {
@@ -134,7 +136,9 @@ class AppMenu extends StatelessWidget {
                   );
                 }
 
-                sectionWidgets.add(_AppMenuTile(item: item));
+                sectionWidgets.add(
+                  _AppMenuTile(item: item, closeOnTap: closeOnTap),
+                );
 
                 return Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -150,9 +154,10 @@ class AppMenu extends StatelessWidget {
 }
 
 class _AppMenuTile extends StatelessWidget {
-  const _AppMenuTile({required this.item});
+  const _AppMenuTile({required this.item, required this.closeOnTap});
 
   final AppMenuItem item;
+  final bool closeOnTap;
 
   @override
   Widget build(BuildContext context) {
@@ -196,8 +201,8 @@ class _AppMenuTile extends StatelessWidget {
                 ),
               ),
         onTap: () {
-          if (Scaffold.maybeOf(context)?.isDrawerOpen ?? false) {
-            Navigator.of(context).pop();
+          if (closeOnTap) {
+            Navigator.of(context).maybePop();
           }
           item.onTap?.call();
         },
