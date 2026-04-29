@@ -117,7 +117,7 @@ class _LoginPageState extends State<LoginPage> {
                         ),
                         const SizedBox(height: 8),
                         Text(
-                          'เข้าใช้งานระบบข่าวสารวิทยาลัย',
+                          'เข้าใช้งานระบบข่าวสารมหาวิทยาลัย',
                           textAlign: TextAlign.center,
                           style: Theme.of(context).textTheme.bodyMedium,
                         ),
