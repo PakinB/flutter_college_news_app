@@ -5,8 +5,21 @@ $data = json_decode(file_get_contents("php://input"), true);
 
 $id = intval($data['id']);
 $name = $data['name'];
-$faculty_id = $data['faculty_id'];
+$faculty_id = isset($data['faculty_id']) && $data['faculty_id'] !== ''
+    ? (int)$data['faculty_id']
+    : null;
 $role = $data['role'] ?? null;
+if ($role === 'user') {
+    $role = 'student';
+}
+if ($role === 'staff') {
+    $role = 'employee';
+}
+$allowed_roles = ['admin', 'pr', 'teacher', 'student', 'employee'];
+if ($role && !in_array($role, $allowed_roles, true)) {
+    $role = null;
+}
+$facultySqlValue = $faculty_id === null ? "NULL" : "'$faculty_id'";
 
 if (!empty($data['password'])) {
 
@@ -14,13 +27,13 @@ if (!empty($data['password'])) {
 
     $roleSql = $role ? ", role='$role'" : "";
     $sql = "UPDATE users 
-            SET name='$name', password='$password', faculty_id='$faculty_id' $roleSql
+            SET name='$name', password='$password', faculty_id=$facultySqlValue $roleSql
             WHERE id=$id";
 } else {
 
     $roleSql = $role ? ", role='$role'" : "";
     $sql = "UPDATE users 
-            SET name='$name', faculty_id='$faculty_id' $roleSql
+            SET name='$name', faculty_id=$facultySqlValue $roleSql
             WHERE id=$id";
 }
 

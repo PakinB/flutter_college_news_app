@@ -25,9 +25,16 @@ $role = $data['role'] ?? 'student';
 if ($role === 'user') {
     $role = 'student';
 }
+if ($role === 'staff') {
+    $role = 'employee';
+}
+$allowed_roles = ['student', 'employee'];
+if (!in_array($role, $allowed_roles, true)) {
+    $role = 'student';
+}
 $faculty_id = isset($data['faculty_id']) ? (int)$data['faculty_id'] : null;
 
-if (!$name || !$email || !$password_raw || !$faculty_id) {
+if (!$name || !$email || !$password_raw || ($role !== 'employee' && !$faculty_id)) {
     echo json_encode(["status" => "error", "message" => "Missing fields"]);
     exit;
 }

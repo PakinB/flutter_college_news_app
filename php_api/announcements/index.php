@@ -73,6 +73,10 @@ if ($method === "GET") {
     $status = $_GET["status"] ?? null;
     $target_faculty_id = get_query_int("target_faculty_id");
     $visible_faculty_id = get_query_int("visible_faculty_id");
+    $visible_role = isset($_GET["visible_role"]) ? strtolower(trim($_GET["visible_role"])) : null;
+    if ($visible_role === "staff") {
+        $visible_role = "employee";
+    }
 
     $sql =
         "SELECT a.*, u.name AS creator_name, f.name AS target_faculty_name
@@ -81,11 +85,27 @@ if ($method === "GET") {
          LEFT JOIN faculties f ON f.id = a.target_faculty_id
          WHERE (? IS NULL OR a.status = ?)
            AND (? IS NULL OR a.target_faculty_id = ?)
-           AND (? IS NULL OR a.target_type = 'all' OR a.target_faculty_id = ?)
+           AND (
+             ? IS NULL
+             OR a.target_type = 'all'
+             OR (a.target_type IS NULL AND a.target_faculty_id IS NULL)
+             OR (? = 'employee' AND a.target_type = 'employee')
+             OR (? <> 'employee' AND (a.target_type = 'faculty' OR a.target_type IS NULL) AND a.target_faculty_id = ?)
+           )
          ORDER BY a.created_at DESC";
 
     $stmt = $conn->prepare($sql);
-    $stmt->bind_param("ssiiii", $status, $status, $target_faculty_id, $target_faculty_id, $visible_faculty_id, $visible_faculty_id);
+    $stmt->bind_param(
+        "ssiisssi",
+        $status,
+        $status,
+        $target_faculty_id,
+        $target_faculty_id,
+        $visible_role,
+        $visible_role,
+        $visible_role,
+        $visible_faculty_id
+    );
     $stmt->execute();
 
     $announcements = db_fetch_all($stmt->get_result());

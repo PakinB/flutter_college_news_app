@@ -455,12 +455,18 @@ Future<void> showLatestAnnouncementPopup({
                   color: Color(0xFFD9D1FF),
                 ),
                 _TagPill(
-                  label: announcement.isAllFaculty ? 'ข่าวทุกคน' : 'ข่าวคณะ',
+                  label: announcement.isEmployeeTarget
+                      ? 'ข่าวพนักงาน'
+                      : announcement.isAllFaculty
+                          ? 'ข่าวทุกคน'
+                          : 'ข่าวคณะ',
                   color: announcement.isAllFaculty
                       ? const Color(0xFFCDE8B3)
-                      : const Color(0xFFBBD5F2),
+                      : announcement.isEmployeeTarget
+                          ? const Color(0xFFFFDCA8)
+                          : const Color(0xFFBBD5F2),
                 ),
-                if (!announcement.isAllFaculty)
+                if (!announcement.isAllFaculty && !announcement.isEmployeeTarget)
                   _TagPill(
                     label: announcement.targetFacultyName,
                     color: const Color(0xFFE3DED4),
@@ -497,6 +503,8 @@ Future<void> showLatestAnnouncementPopup({
               label: 'คณะ',
               value: announcement.isAllFaculty
                   ? 'ข่าวทุกคน'
+                  : announcement.isEmployeeTarget
+                      ? 'ข่าวพนักงาน'
                   : announcement.targetFacultyName,
             ),
             _DetailLine(label: 'ผู้ประกาศ', value: announcement.author),
@@ -745,11 +753,14 @@ Future<AnnouncementEditorResult?> showAnnouncementEditor({
   final bool canSelectPublishedStatus = user.isAdmin || status == 'published';
   int? targetFacultyId = existing?.targetFacultyId;
   String targetType = existing?.targetType ?? 'all';
-  String targetValue = targetType == 'all' || targetFacultyId == null
-      ? 'all'
-      : 'faculty:$targetFacultyId';
+  String targetValue = targetType == 'employee'
+      ? 'employee'
+      : targetType == 'all' || targetFacultyId == null
+          ? 'all'
+          : 'faculty:$targetFacultyId';
   final Set<String> targetOptions = <String>{
     'all',
+    'employee',
     ...facultyOptions.map((Faculty item) => 'faculty:${item.id}'),
   };
 
@@ -868,12 +879,16 @@ Future<AnnouncementEditorResult?> showAnnouncementEditor({
                       DropdownButtonFormField<String>(
                         initialValue: targetValue,
                         decoration: const InputDecoration(
-                          labelText: 'กระจายข่าวไปยังคณะ',
+                          labelText: 'หมวดหมู่ข่าว',
                         ),
                         items: <DropdownMenuItem<String>>[
                           const DropdownMenuItem<String>(
                             value: 'all',
-                            child: Text('ทุกคณะ'),
+                            child: Text('ทุกคน'),
+                          ),
+                          const DropdownMenuItem<String>(
+                            value: 'employee',
+                            child: Text('พนักงาน'),
                           ),
                           ...facultyOptions.map(
                             (Faculty item) => DropdownMenuItem<String>(
@@ -887,12 +902,14 @@ Future<AnnouncementEditorResult?> showAnnouncementEditor({
                             targetValue = value ?? 'all';
                             targetType = targetValue == 'all'
                                 ? 'all'
-                                : 'faculty';
-                            targetFacultyId = targetType == 'all'
-                                ? null
-                                : int.tryParse(
+                                : targetValue == 'employee'
+                                    ? 'employee'
+                                    : 'faculty';
+                            targetFacultyId = targetType == 'faculty'
+                                ? int.tryParse(
                                     targetValue.replaceFirst('faculty:', ''),
-                                  );
+                                  )
+                                : null;
                           });
                         },
                       )
@@ -943,14 +960,16 @@ Future<AnnouncementEditorResult?> showAnnouncementEditor({
                               targetType: targetType,
                               targetFacultyId: targetFacultyId,
                               targetFacultyName:
-                                  facultyOptions
-                                      .where(
-                                        (Faculty item) =>
-                                            item.id == targetFacultyId,
-                                      )
-                                      .firstOrNull
-                                      ?.name ??
-                                  'ทุกคณะ',
+                                  targetType == 'employee'
+                                      ? 'พนักงาน'
+                                      : (facultyOptions
+                                                .where(
+                                                  (Faculty item) =>
+                                                      item.id == targetFacultyId,
+                                                )
+                                                .firstOrNull
+                                                ?.name ??
+                                            'ทุกคน'),
                               createdAt: existing?.createdAt ?? '-',
                               updatedAt: DateTime.now().toIso8601String(),
                               expiredAt: expiredAt.text.trim().isEmpty

@@ -20,6 +20,7 @@ class _RegisterPageState extends State<RegisterPage> {
   final _confirmPasswordController = TextEditingController();
   bool _obscurePassword = true;
 
+  String selectedRole = 'student';
   String selectedFaculty = '1';
 
   Future<void> register() async {
@@ -32,8 +33,8 @@ class _RegisterPageState extends State<RegisterPage> {
         "name": _nameController.text.trim(),
         "email": _emailController.text.trim(),
         "password": _passwordController.text,
-        "role": "student",
-        "faculty_id": selectedFaculty,
+        "role": selectedRole,
+        "faculty_id": selectedRole == 'employee' ? null : selectedFaculty,
       }),
     );
 
@@ -205,42 +206,64 @@ class _RegisterPageState extends State<RegisterPage> {
                           onFieldSubmitted: (_) => _register(),
                         ),
                         const SizedBox(height: 16),
-                        DropdownButtonFormField(
-                          initialValue: selectedFaculty,
+                        DropdownButtonFormField<String>(
+                          initialValue: selectedRole,
                           items: const [
                             DropdownMenuItem(
-                              value: '1',
-                              child: Text('เทคโนโลยีสารสนเทศ'),
+                              value: 'student',
+                              child: Text('นักศึกษา'),
                             ),
                             DropdownMenuItem(
-                              value: '2',
-                              child: Text('นิติศาสตร์'),
-                            ),
-                            DropdownMenuItem(
-                              value: '3',
-                              child: Text('บริหารธุรกิจ'),
-                            ),
-                            DropdownMenuItem(
-                              value: '4',
-                              child: Text('ศิลปะศาสตร์'),
-                            ),
-                            DropdownMenuItem(value: '5', child: Text('บัญชี')),
-                            DropdownMenuItem(
-                              value: '6',
-                              child: Text('โลจิสติกส์และซัพพลายเชน'),
-                            ),
-                            DropdownMenuItem(
-                              value: '7',
-                              child: Text('นิเทศศาสตร์'),
+                              value: 'employee',
+                              child: Text('พนักงาน'),
                             ),
                           ],
-                          onChanged: (value) {
+                          onChanged: (String? value) {
                             setState(() {
-                              selectedFaculty = value.toString();
+                              selectedRole = value ?? selectedRole;
                             });
                           },
-                          decoration: const InputDecoration(labelText: "คณะ"),
+                          decoration: const InputDecoration(labelText: "บทบาท"),
                         ),
+                        if (selectedRole != 'employee') ...<Widget>[
+                          const SizedBox(height: 16),
+                          DropdownButtonFormField(
+                            initialValue: selectedFaculty,
+                            items: const [
+                              DropdownMenuItem(
+                                value: '1',
+                                child: Text('เทคโนโลยีสารสนเทศ'),
+                              ),
+                              DropdownMenuItem(
+                                value: '2',
+                                child: Text('นิติศาสตร์'),
+                              ),
+                              DropdownMenuItem(
+                                value: '3',
+                                child: Text('บริหารธุรกิจ'),
+                              ),
+                              DropdownMenuItem(
+                                value: '4',
+                                child: Text('ศิลปะศาสตร์'),
+                              ),
+                              DropdownMenuItem(value: '5', child: Text('บัญชี')),
+                              DropdownMenuItem(
+                                value: '6',
+                                child: Text('โลจิสติกส์และซัพพลายเชน'),
+                              ),
+                              DropdownMenuItem(
+                                value: '7',
+                                child: Text('นิเทศศาสตร์'),
+                              ),
+                            ],
+                            onChanged: (value) {
+                              setState(() {
+                                selectedFaculty = value.toString();
+                              });
+                            },
+                            decoration: const InputDecoration(labelText: "คณะ"),
+                          ),
+                        ],
                         const SizedBox(height: 24),
                         FilledButton(
                           onPressed: _register,

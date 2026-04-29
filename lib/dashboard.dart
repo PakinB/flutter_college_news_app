@@ -45,7 +45,7 @@ class _DashboardPageState extends State<DashboardPage> {
   @override
   void initState() {
     super.initState();
-    if (currentUser.isStudent) {
+    if (currentUser.isRecipientOnly) {
       _activeMenu = 'ข่าวทั้งหมด';
     }
     _loadData();
@@ -62,6 +62,9 @@ class _DashboardPageState extends State<DashboardPage> {
         visibleFacultyId: currentUser.isAdmin || currentUser.isPr
             ? null
             : currentUser.facultyId,
+        visibleRole: currentUser.isAdmin || currentUser.isPr
+            ? null
+            : currentUser.role,
       );
       final List<Faculty> faculties = await _api.fetchFaculties();
       final List<Map<String, dynamic>> users = currentUser.canManageSystem
@@ -186,8 +189,14 @@ class _DashboardPageState extends State<DashboardPage> {
 
   List<Announcement> get _visibleAnnouncements {
     if (currentUser.isAdmin || currentUser.isPr) return _announcements;
+    if (currentUser.isEmployee) {
+      return _announcements.where((Announcement item) {
+        return item.isAllFaculty || item.isEmployeeTarget;
+      }).toList();
+    }
     return _announcements.where((Announcement item) {
-      return item.isAllFaculty || item.targetFacultyId == currentUser.facultyId;
+      return item.isAllFaculty ||
+          (item.isFacultyTarget && item.targetFacultyId == currentUser.facultyId);
     }).toList();
   }
 
@@ -291,7 +300,7 @@ class _DashboardPageState extends State<DashboardPage> {
     }
 
     return <AppMenuItem>[
-      if (!currentUser.isStudent) item(Icons.dashboard_rounded, 'แดชบอร์ด'),
+      if (!currentUser.isRecipientOnly) item(Icons.dashboard_rounded, 'แดชบอร์ด'),
       item(
         Icons.article_outlined,
         'ข่าวทั้งหมด',
