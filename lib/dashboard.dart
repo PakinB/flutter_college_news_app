@@ -61,7 +61,9 @@ class _DashboardPageState extends State<DashboardPage> {
 
     try {
       final List<Announcement> announcements = await _api.fetchAnnouncements(
-        visibleFacultyId: currentUser.canManageSystem ? null : currentUser.facultyId,
+        visibleFacultyId: currentUser.isAdmin || currentUser.isPr
+            ? null
+            : currentUser.facultyId,
       );
       final List<Faculty> faculties = await _api.fetchFaculties();
       final List<Map<String, dynamic>> users = currentUser.canManageSystem
@@ -158,7 +160,7 @@ class _DashboardPageState extends State<DashboardPage> {
   }
 
   List<Announcement> get _visibleAnnouncements {
-    if (currentUser.canManageSystem) return _announcements;
+    if (currentUser.isAdmin || currentUser.isPr) return _announcements;
     return _announcements.where((Announcement item) {
       return item.isAllFaculty || item.targetFacultyId == currentUser.facultyId;
     }).toList();
