@@ -2,8 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_booking/dashboard.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
-import 'api_config.dart';
 import 'register.dart';
+
+const _loginApiUrl =
+    'https://localhost/flutter_college_news_app/php_api/auth/login.php';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -26,16 +28,20 @@ class _LoginPageState extends State<LoginPage> {
   }
 
   Future _login() async {
-    var url = Uri.parse("$apiBaseUrl/auth/login.php");
+    if (!_formKey.currentState!.validate()) return;
+
+    var url = Uri.parse(_loginApiUrl);
 
     var response = await http.post(
       url,
-      headers: {"Content-Type": "text/plain; charset=UTF-8"},
+      headers: {"Content-Type": "application/json; charset=UTF-8"},
       body: jsonEncode({
-        "email": _emailController.text,
+        "email": _emailController.text.trim(),
         "password": _passwordController.text,
       }),
     );
+
+    if (!mounted) return;
 
     if (response.statusCode == 200) {
       final data = jsonDecode(response.body);
@@ -53,15 +59,14 @@ class _LoginPageState extends State<LoginPage> {
           ),
         );
       }
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text("Login failed: ${response.statusCode}"),
+          backgroundColor: Colors.red,
+        ),
+      );
     }
-  }
-
-  void login() {
-    if (!_formKey.currentState!.validate()) return;
-
-    Navigator.of(
-      context,
-    ).pushReplacement(MaterialPageRoute(builder: (_) => DashboardPage()));
   }
 
   void _openRegister() {
@@ -89,7 +94,7 @@ class _LoginPageState extends State<LoginPage> {
                 child: Padding(
                   padding: const EdgeInsets.all(24),
                   child: Form(
-                    // key: _formKey,
+                    key: _formKey,
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
                       crossAxisAlignment: CrossAxisAlignment.stretch,

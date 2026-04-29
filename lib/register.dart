@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
-import 'api_config.dart';
+
+const _registerApiUrl =
+    'https://localhost/flutter_college_news_app/php_api/auth/register.php';
 
 class RegisterPage extends StatefulWidget {
   const RegisterPage({super.key});
@@ -21,14 +23,14 @@ class _RegisterPageState extends State<RegisterPage> {
   String selectedFaculty = '1';
 
   Future<void> register() async {
-    final url = Uri.parse("$apiBaseUrl/auth/register.php");
+    final url = Uri.parse(_registerApiUrl);
 
     final response = await http.post(
       url,
-      headers: {"Content-Type": "text/plain; charset=UTF-8"},
+      headers: {"Content-Type": "application/json; charset=UTF-8"},
       body: jsonEncode({
-        "name": _nameController.text,
-        "email": _emailController.text,
+        "name": _nameController.text.trim(),
+        "email": _emailController.text.trim(),
         "password": _passwordController.text,
         "role": "user",
         "faculty_id": selectedFaculty,
@@ -36,6 +38,8 @@ class _RegisterPageState extends State<RegisterPage> {
     );
 
     final data = jsonDecode(response.body);
+
+    if (!mounted) return;
 
     if (data['status'] == 'success') {
       ScaffoldMessenger.of(
