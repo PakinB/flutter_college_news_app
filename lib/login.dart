@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_booking/dashboard.dart';
+import 'package:flutter_booking/models/app_user.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'register.dart';
@@ -47,9 +48,12 @@ class _LoginPageState extends State<LoginPage> {
       final data = jsonDecode(response.body);
 
       if (data["status"] == "success") {
+        final AppUser user = AppUser.fromJson(
+          Map<String, dynamic>.from(data["user"] as Map),
+        );
         Navigator.pushReplacement(
           context,
-          MaterialPageRoute(builder: (context) => DashboardPage()),
+          MaterialPageRoute(builder: (context) => DashboardPage(currentUser: user)),
         );
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
