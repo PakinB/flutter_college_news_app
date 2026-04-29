@@ -16,20 +16,21 @@ class AppUser {
   bool get isAdmin => role.toLowerCase() == 'admin';
   bool get isPr => role.toLowerCase() == 'pr';
   bool get isTeacher => role.toLowerCase() == 'teacher';
-  bool get isStudent => role.toLowerCase() == 'student';
+  bool get isStudent => role.toLowerCase() == 'student' || role.toLowerCase() == 'user';
   bool get canCreateNews => isAdmin || isPr || isTeacher;
   bool get canManageSystem => isAdmin;
 
   String get displayRole {
     switch (role.toLowerCase()) {
       case 'admin':
-        return 'Admin';
+        return 'แอดมิน';
       case 'pr':
-        return 'PR';
+        return 'ผู้ประกาศข่าว';
       case 'teacher':
-        return 'Teacher';
+        return 'อาจารย์';
       case 'student':
-        return 'Student';
+      case 'user':
+        return 'นักศึกษา';
       default:
         return role.isEmpty ? '-' : role;
     }
@@ -49,7 +50,7 @@ class AppUser {
       id: int.tryParse('${json['id'] ?? 0}') ?? 0,
       name: '${json['name'] ?? '-'}',
       email: '${json['email'] ?? '-'}',
-      role: '${json['role'] ?? 'student'}'.toLowerCase(),
+      role: _normalizeRole(json['role']),
       facultyId: int.tryParse('${json['faculty_id'] ?? ''}'),
     );
   }
@@ -63,4 +64,9 @@ class AppUser {
       'faculty_id': facultyId,
     };
   }
+}
+
+String _normalizeRole(dynamic value) {
+  final String role = '${value ?? 'student'}'.trim().toLowerCase();
+  return role == 'user' ? 'student' : role;
 }

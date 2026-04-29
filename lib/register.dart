@@ -32,7 +32,7 @@ class _RegisterPageState extends State<RegisterPage> {
         "name": _nameController.text.trim(),
         "email": _emailController.text.trim(),
         "password": _passwordController.text,
-        "role": "user",
+        "role": "student",
         "faculty_id": selectedFaculty,
       }),
     );

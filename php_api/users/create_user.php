@@ -6,7 +6,10 @@ $data = json_decode(file_get_contents("php://input"), true);
 $name = $data['name'];
 $email = $data['email'];
 $password = password_hash($data['password'], PASSWORD_DEFAULT);
-$role = $data['role'];
+$role = $data['role'] ?? 'student';
+if ($role === 'user') {
+    $role = 'student';
+}
 $faculty_id = $data['faculty_id'];
 
 $sql = "INSERT INTO users (name, email, password, role, faculty_id)

@@ -26,15 +26,19 @@ class AppMenu extends StatelessWidget {
     required this.items,
     this.userName = 'อรรถกร กิติ',
     this.userRole = 'Admin',
+    this.userFaculty,
     this.userInitials = 'AK',
     this.closeOnTap = false,
+    this.onLogout,
   });
 
   final List<AppMenuItem> items;
   final String userName;
   final String userRole;
+  final String? userFaculty;
   final String userInitials;
   final bool closeOnTap;
+  final VoidCallback? onLogout;
 
   @override
   Widget build(BuildContext context) {
@@ -91,14 +95,14 @@ class AppMenu extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: <Widget>[
                       Text(
-                        userName,
+                        'ชื่อ: $userName',
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: const TextStyle(fontWeight: FontWeight.w700),
                       ),
                       const SizedBox(height: 2),
                       Text(
-                        userRole,
+                        'สถานะ: $userRole',
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: const TextStyle(
@@ -106,6 +110,19 @@ class AppMenu extends StatelessWidget {
                           fontWeight: FontWeight.w600,
                         ),
                       ),
+                      if (userFaculty != null) ...<Widget>[
+                        const SizedBox(height: 2),
+                        Text(
+                          'คณะที่เรียน: $userFaculty',
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(
+                            color: Color(0xFF6E6A61),
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ],
                     ],
                   ),
                 ),
@@ -145,6 +162,34 @@ class AppMenu extends StatelessWidget {
                   children: sectionWidgets,
                 );
               }).toList(),
+            ),
+          ),
+          const Divider(height: 1, color: Color(0xFFE1D8C8)),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(12, 10, 12, 14),
+            child: ListTile(
+              dense: true,
+              minLeadingWidth: 28,
+              leading: const Icon(
+                Icons.logout_rounded,
+                color: Color(0xFFC74A47),
+              ),
+              title: const Text(
+                'ออกจากระบบ',
+                style: TextStyle(
+                  color: Color(0xFFC74A47),
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(14),
+              ),
+              onTap: () {
+                if (closeOnTap) {
+                  Navigator.of(context).maybePop();
+                }
+                onLogout?.call();
+              },
             ),
           ),
         ],

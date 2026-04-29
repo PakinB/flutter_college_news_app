@@ -94,6 +94,10 @@ class NewsListBody extends StatelessWidget {
           onEdit: () => onEdit(item),
           onApprove: () => onApprove(item),
           onDelete: () => onDelete(item),
+          onView: () => showAnnouncementDetails(
+            context: context,
+            announcement: item,
+          ),
         );
       },
     );
