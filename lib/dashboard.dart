@@ -1,5 +1,9 @@
 import 'package:flutter/material.dart';
+import 'dart:convert';
+import 'package:http/http.dart' as http;
 import 'widgets/app_menu.dart';
+
+const _apiBaseUrl = 'http://localhost/flutter_college_news_app/php_api';
 
 class DashboardPage extends StatefulWidget {
   const DashboardPage({super.key});
@@ -9,10 +13,15 @@ class DashboardPage extends StatefulWidget {
 }
 
 class _DashboardPageState extends State<DashboardPage> {
-  final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
+  bool _showMenu = false;
+  String _activeMenu = 'แดชบอร์ด';
+  bool _isLoading = true;
+  String? _loadError;
 
   String selectedFilter = 'ทั้งหมด';
   String selectedFaculty = 'ทุกคณะ';
+  List<Map<String, dynamic>> users = <Map<String, dynamic>>[];
+  List<Map<String, dynamic>> faculties = <Map<String, dynamic>>[];
 
   final List<String> filters = <String>[
     'ทั้งหมด',
@@ -22,12 +31,46 @@ class _DashboardPageState extends State<DashboardPage> {
     'ด่วน',
   ];
 
-  final List<_StatCardData> statCards = const <_StatCardData>[
-    _StatCardData('ข่าวทั้งหมด', '124', 'เดือนนี้ +12', Color(0xFF232323)),
-    _StatCardData('เผยแพร่แล้ว', '98', '79% ของทั้งหมด', Color(0xFF5E9734)),
-    _StatCardData('รออนุมัติ', '5', 'ต้องดำเนินการ', Color(0xFFAF7320)),
-    _StatCardData('ข่าวด่วน', '3', 'กำลังแสดงอยู่', Color(0xFFC74A47)),
-  ];
+  List<_StatCardData> get statCards {
+    final int published = announcements
+        .where((_Announcement item) => _isPublishedStatus(item.status))
+        .length;
+    final int pending = announcements
+        .where((_Announcement item) => _isPendingStatus(item.status))
+        .length;
+    final int urgent = announcements
+        .where((_Announcement item) => _isUrgentPriority(item.priority))
+        .length;
+
+    return <_StatCardData>[
+      _StatCardData(
+        'ข่าวทั้งหมด',
+        '${announcements.length}',
+        'จากฐานข้อมูล',
+        const Color(0xFF232323),
+      ),
+      _StatCardData(
+        'เผยแพร่แล้ว',
+        '$published',
+        announcements.isEmpty
+            ? '0% ของทั้งหมด'
+            : '${((published / announcements.length) * 100).round()}% ของทั้งหมด',
+        const Color(0xFF5E9734),
+      ),
+      _StatCardData(
+        'รออนุมัติ',
+        '$pending',
+        'ต้องดำเนินการ',
+        const Color(0xFFAF7320),
+      ),
+      _StatCardData(
+        'ข่าวด่วน',
+        '$urgent',
+        'กำลังแสดงอยู่',
+        const Color(0xFFC74A47),
+      ),
+    ];
+  }
 
   final List<_NotificationItem> notifications = const <_NotificationItem>[
     _NotificationItem(
@@ -54,7 +97,7 @@ class _DashboardPageState extends State<DashboardPage> {
     ),
   ];
 
-  late final List<_Announcement> announcements = <_Announcement>[
+  List<_Announcement> announcements = <_Announcement>[
     _Announcement(
       title: 'ประกาศปิดมหาวิทยาลัยกรณีฉุกเฉิน วันที่ 30 เมษายน 2568',
       summary: 'ประกาศสำคัญกรณีสภาพอากาศแปรปรวน',
@@ -113,6 +156,66 @@ class _DashboardPageState extends State<DashboardPage> {
     ),
   ];
 
+  @override
+  void initState() {
+    super.initState();
+    _loadDashboardData();
+  }
+
+  Future<void> _loadDashboardData() async {
+    setState(() {
+      _isLoading = true;
+      _loadError = null;
+    });
+
+    try {
+      final List<dynamic> announcementRows = await _fetchApiList(
+        'announcements/index.php',
+      );
+      final List<dynamic> userRows = await _fetchApiList('users/get_users.php');
+      final List<dynamic> facultyRows = await _fetchApiList(
+        'faculties/index.php',
+      );
+
+      if (!mounted) return;
+
+      setState(() {
+        announcements = announcementRows
+            .whereType<Map<String, dynamic>>()
+            .map(_Announcement.fromApi)
+            .toList();
+        users = userRows.whereType<Map<String, dynamic>>().toList();
+        faculties = facultyRows.whereType<Map<String, dynamic>>().toList();
+        _isLoading = false;
+      });
+    } catch (error) {
+      if (!mounted) return;
+
+      setState(() {
+        _loadError = error.toString();
+        _isLoading = false;
+      });
+    }
+  }
+
+  Future<List<dynamic>> _fetchApiList(String path) async {
+    final Uri url = Uri.parse('$_apiBaseUrl/$path');
+    final http.Response response = await http.get(url);
+
+    if (response.statusCode != 200) {
+      throw Exception('Request failed: ${response.statusCode}');
+    }
+
+    final Map<String, dynamic> body =
+        jsonDecode(response.body) as Map<String, dynamic>;
+
+    if (body['status'] != 'success') {
+      throw Exception(body['message'] ?? 'API error');
+    }
+
+    return (body['data'] as List<dynamic>? ?? <dynamic>[]);
+  }
+
   List<_Announcement> get filteredAnnouncements {
     if (selectedFilter == 'ทั้งหมด') {
       return announcements;
@@ -120,7 +223,16 @@ class _DashboardPageState extends State<DashboardPage> {
 
     return announcements.where((_Announcement item) {
       if (selectedFilter == 'ด่วน') {
-        return item.priority == 'ด่วน';
+        return _isUrgentPriority(item.priority);
+      }
+      if (selectedFilter == 'เผยแพร่แล้ว') {
+        return _isPublishedStatus(item.status);
+      }
+      if (selectedFilter == 'รออนุมัติ') {
+        return _isPendingStatus(item.status);
+      }
+      if (selectedFilter == 'ฉบับร่าง') {
+        return _isDraftStatus(item.status);
       }
       return item.status == selectedFilter;
     }).toList();
@@ -562,12 +674,16 @@ class _DashboardPageState extends State<DashboardPage> {
         final bool isTablet = constraints.maxWidth >= 700;
         final List<AppMenuItem> menuItems = _buildAppMenuItems(
           context,
-          activeLabel: 'แดชบอร์ด',
+          activeLabel: _activeMenu,
+          onSelected: (String label) {
+            setState(() {
+              _activeMenu = label;
+              _showMenu = false;
+            });
+          },
         );
 
         return Scaffold(
-          key: _scaffoldKey,
-          drawerEnableOpenDragGesture: !isDesktop,
           appBar: isDesktop
               ? null
               : AppBar(
@@ -575,15 +691,17 @@ class _DashboardPageState extends State<DashboardPage> {
                   foregroundColor: const Color(0xFF2D2A24),
                   elevation: 0,
                   leading: IconButton(
-                    tooltip: 'เมนู',
-                    onPressed: () => _scaffoldKey.currentState?.openDrawer(),
-                    icon: const Icon(Icons.menu_rounded),
+                    tooltip: _showMenu ? 'ปิดเมนู' : 'เมนู',
+                    onPressed: () => setState(() => _showMenu = !_showMenu),
+                    icon: Icon(
+                      _showMenu ? Icons.close_rounded : Icons.menu_rounded,
+                    ),
                   ),
-                  title: const Text(
-                    'แดชบอร์ด',
+                  title: Text(
+                    _showMenu ? 'เมนู' : _activeMenu,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: TextStyle(fontWeight: FontWeight.w800),
+                    style: const TextStyle(fontWeight: FontWeight.w800),
                   ),
                   actions: <Widget>[
                     IconButton(
@@ -598,100 +716,64 @@ class _DashboardPageState extends State<DashboardPage> {
                     ),
                   ],
                 ),
-          drawer: isDesktop
-              ? null
-              : Drawer(
-                  child: SafeArea(child: AppMenu(items: menuItems)),
-                ),
           body: SafeArea(
             top: isDesktop,
-            child: Row(
-              children: <Widget>[
-                if (isDesktop)
-                  SizedBox(width: 264, child: AppMenu(items: menuItems)),
-                Expanded(
-                  child: Container(
-                    decoration: const BoxDecoration(
-                      border: Border(
-                        left: BorderSide(color: Color(0xFFE0D7C8)),
-                      ),
-                    ),
-                    child: SingleChildScrollView(
-                      padding: EdgeInsets.fromLTRB(
-                        isTablet ? 20 : 14,
-                        16,
-                        isTablet ? 20 : 14,
-                        24,
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: <Widget>[
-                          _ResponsiveTopBar(
-                            isDesktop: isDesktop,
-                            onNotificationsTap: _showNotificationsDialog,
-                            onCreateTap: _showCreateNewsDialog,
-                          ),
-                          const SizedBox(height: 18),
-                          _StatsGrid(
-                            statCards: statCards,
-                            isDesktop: isDesktop,
-                            isTablet: isTablet,
-                          ),
-                          const SizedBox(height: 16),
-                          _FilterRow(
-                            filters: filters,
-                            selectedFilter: selectedFilter,
-                            selectedFaculty: selectedFaculty,
-                            onFilterChanged: (String value) {
-                              setState(() => selectedFilter = value);
-                            },
-                          ),
-                          const SizedBox(height: 16),
-                          const Text(
-                            'ข่าวประกาศ',
-                            style: TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.w800,
-                              color: Color(0xFF2D2A24),
+            child: !isDesktop && _showMenu
+                ? AppMenu(items: menuItems)
+                : Row(
+                    children: <Widget>[
+                      if (isDesktop)
+                        SizedBox(width: 264, child: AppMenu(items: menuItems)),
+                      Expanded(
+                        child: Container(
+                          decoration: const BoxDecoration(
+                            border: Border(
+                              left: BorderSide(color: Color(0xFFE0D7C8)),
                             ),
                           ),
-                          const SizedBox(height: 12),
-                          ListView.separated(
-                            shrinkWrap: true,
-                            physics: const NeverScrollableScrollPhysics(),
-                            itemCount: filteredAnnouncements.length,
-                            separatorBuilder: (context, index) =>
-                                const SizedBox(height: 12),
-                            itemBuilder:
-                                (BuildContext context, int visibleIndex) {
-                                  final _Announcement item =
-                                      filteredAnnouncements[visibleIndex];
-                                  final int actualIndex = announcements.indexOf(
-                                    item,
-                                  );
-
-                                  return _AnnouncementCard(
-                                    announcement: item,
-                                    compact: !isTablet,
-                                    onActionPressed: (String action) {
-                                      if (action == 'แก้ไข') {
-                                        _showEditNewsDialog(actualIndex);
-                                      } else if (action == 'ลบ') {
-                                        _showDeleteDialog(actualIndex);
-                                      } else if (action == 'อนุมัติ') {
-                                        _approveAnnouncement(actualIndex);
-                                      }
-                                    },
-                                  );
-                                },
-                          ),
-                        ],
+                          child: _activeMenu == 'แดชบอร์ด'
+                              ? _DashboardContent(
+                                  isDesktop: isDesktop,
+                                  isTablet: isTablet,
+                                  statCards: statCards,
+                                  filters: filters,
+                                  selectedFilter: selectedFilter,
+                                  selectedFaculty: selectedFaculty,
+                                  filteredAnnouncements: filteredAnnouncements,
+                                  announcements: announcements,
+                                  isLoading: _isLoading,
+                                  loadError: _loadError,
+                                  onRefresh: _loadDashboardData,
+                                  onNotificationsTap: _showNotificationsDialog,
+                                  onCreateTap: _showCreateNewsDialog,
+                                  onFilterChanged: (String value) {
+                                    setState(() => selectedFilter = value);
+                                  },
+                                  onActionPressed:
+                                      (int actualIndex, String action) {
+                                        if (action == 'แก้ไข') {
+                                          _showEditNewsDialog(actualIndex);
+                                        } else if (action == 'ลบ') {
+                                          _showDeleteDialog(actualIndex);
+                                        } else if (action == 'อนุมัติ') {
+                                          _approveAnnouncement(actualIndex);
+                                        }
+                                      },
+                                )
+                              : _MenuPlaceholderContent(
+                                  title: _activeMenu,
+                                  icon: _menuIconFor(_activeMenu),
+                                  announcements: announcements,
+                                  users: users,
+                                  faculties: faculties,
+                                  isLoading: _isLoading,
+                                  loadError: _loadError,
+                                  onRefresh: _loadDashboardData,
+                                ),
+                        ),
                       ),
-                    ),
+                    ],
                   ),
-                ),
-              ],
-            ),
           ),
         );
       },
@@ -702,6 +784,7 @@ class _DashboardPageState extends State<DashboardPage> {
 List<AppMenuItem> _buildAppMenuItems(
   BuildContext context, {
   required String activeLabel,
+  ValueChanged<String>? onSelected,
 }) {
   AppMenuItem item(
     IconData icon,
@@ -719,7 +802,13 @@ List<AppMenuItem> _buildAppMenuItems(
       section: section,
       onTap: activeLabel == label
           ? null
-          : () => _openMenuDestination(context, label),
+          : () {
+              if (onSelected != null) {
+                onSelected(label);
+                return;
+              }
+              _openMenuDestination(context, label);
+            },
     );
   }
 
@@ -765,6 +854,531 @@ IconData _menuIconFor(String label) {
   }
 }
 
+bool _isPublishedStatus(String value) {
+  final String normalized = value.toLowerCase();
+  return value == 'เผยแพร่แล้ว' ||
+      normalized == 'published' ||
+      normalized == 'publish';
+}
+
+bool _isPendingStatus(String value) {
+  final String normalized = value.toLowerCase();
+  return value == 'รออนุมัติ' ||
+      normalized == 'pending' ||
+      normalized == 'waiting';
+}
+
+bool _isDraftStatus(String value) {
+  final String normalized = value.toLowerCase();
+  return value == 'ฉบับร่าง' || normalized == 'draft';
+}
+
+bool _isUrgentPriority(String value) {
+  final String normalized = value.toLowerCase();
+  return value == 'ด่วน' || normalized == 'urgent' || normalized == 'high';
+}
+
+List<_Tag> _makeTags({
+  required String status,
+  required String priority,
+  required String faculty,
+}) {
+  return <_Tag>[
+    _isUrgentPriority(priority)
+        ? const _Tag('ด่วน', Color(0xFFF6C5C3), Color(0xFF9A3835))
+        : const _Tag('ปกติ', Color(0xFFE3DED4), Color(0xFF665E4B)),
+    _isPublishedStatus(status)
+        ? const _Tag('เผยแพร่แล้ว', Color(0xFFCDE8B3), Color(0xFF507A1A))
+        : _isPendingStatus(status)
+        ? const _Tag('รออนุมัติ', Color(0xFFF7D4A7), Color(0xFF9C5B00))
+        : const _Tag('ฉบับร่าง', Color(0xFFF1C66E), Color(0xFF855500)),
+    faculty == 'ทั้งมหาวิทยาลัย' || faculty == 'all'
+        ? const _Tag('ทั้งมหาวิทยาลัย', Color(0xFFBCE8D6), Color(0xFF1C7E65))
+        : _Tag(faculty, const Color(0xFFBBD5F2), const Color(0xFF295C94)),
+  ];
+}
+
+String _displayStatus(String value) {
+  if (_isPublishedStatus(value)) return 'เผยแพร่แล้ว';
+  if (_isPendingStatus(value)) return 'รออนุมัติ';
+  if (_isDraftStatus(value)) return 'ฉบับร่าง';
+  return value.isEmpty ? '-' : value;
+}
+
+String _displayPriority(String value) {
+  if (_isUrgentPriority(value)) return 'ด่วน';
+  if (value.toLowerCase() == 'normal') return 'ปกติ';
+  return value.isEmpty ? '-' : value;
+}
+
+String _textValue(dynamic value, {String fallback = '-'}) {
+  if (value == null) return fallback;
+  final String text = '$value'.trim();
+  if (text.isEmpty || text.toLowerCase() == 'null') return fallback;
+  return text;
+}
+
+class _DashboardContent extends StatelessWidget {
+  const _DashboardContent({
+    required this.isDesktop,
+    required this.isTablet,
+    required this.statCards,
+    required this.filters,
+    required this.selectedFilter,
+    required this.selectedFaculty,
+    required this.filteredAnnouncements,
+    required this.announcements,
+    required this.isLoading,
+    required this.loadError,
+    required this.onRefresh,
+    required this.onNotificationsTap,
+    required this.onCreateTap,
+    required this.onFilterChanged,
+    required this.onActionPressed,
+  });
+
+  final bool isDesktop;
+  final bool isTablet;
+  final List<_StatCardData> statCards;
+  final List<String> filters;
+  final String selectedFilter;
+  final String selectedFaculty;
+  final List<_Announcement> filteredAnnouncements;
+  final List<_Announcement> announcements;
+  final bool isLoading;
+  final String? loadError;
+  final Future<void> Function() onRefresh;
+  final VoidCallback onNotificationsTap;
+  final VoidCallback onCreateTap;
+  final ValueChanged<String> onFilterChanged;
+  final void Function(int actualIndex, String action) onActionPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    if (isLoading) {
+      return const Center(child: CircularProgressIndicator());
+    }
+
+    if (loadError != null) {
+      return _ErrorState(message: loadError!, onRefresh: onRefresh);
+    }
+
+    return SingleChildScrollView(
+      padding: EdgeInsets.fromLTRB(
+        isTablet ? 20 : 14,
+        16,
+        isTablet ? 20 : 14,
+        24,
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          _ResponsiveTopBar(
+            isDesktop: isDesktop,
+            onNotificationsTap: onNotificationsTap,
+            onCreateTap: onCreateTap,
+          ),
+          const SizedBox(height: 18),
+          _StatsGrid(
+            statCards: statCards,
+            isDesktop: isDesktop,
+            isTablet: isTablet,
+          ),
+          const SizedBox(height: 16),
+          _FilterRow(
+            filters: filters,
+            selectedFilter: selectedFilter,
+            selectedFaculty: selectedFaculty,
+            onFilterChanged: onFilterChanged,
+          ),
+          const SizedBox(height: 16),
+          const Text(
+            'ข่าวประกาศ',
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.w800,
+              color: Color(0xFF2D2A24),
+            ),
+          ),
+          const SizedBox(height: 12),
+          if (filteredAnnouncements.isEmpty)
+            const _EmptyState(message: 'ยังไม่มีข่าวประกาศในฐานข้อมูล')
+          else
+            ListView.separated(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              itemCount: filteredAnnouncements.length,
+              separatorBuilder: (context, index) => const SizedBox(height: 12),
+              itemBuilder: (BuildContext context, int visibleIndex) {
+                final _Announcement item = filteredAnnouncements[visibleIndex];
+                final int actualIndex = announcements.indexOf(item);
+
+                return _AnnouncementCard(
+                  announcement: item,
+                  compact: !isTablet,
+                  onActionPressed: (String action) {
+                    onActionPressed(actualIndex, action);
+                  },
+                );
+              },
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+class _MenuPlaceholderContent extends StatelessWidget {
+  const _MenuPlaceholderContent({
+    required this.title,
+    required this.icon,
+    required this.announcements,
+    required this.users,
+    required this.faculties,
+    required this.isLoading,
+    required this.loadError,
+    required this.onRefresh,
+  });
+
+  final String title;
+  final IconData icon;
+  final List<_Announcement> announcements;
+  final List<Map<String, dynamic>> users;
+  final List<Map<String, dynamic>> faculties;
+  final bool isLoading;
+  final String? loadError;
+  final Future<void> Function() onRefresh;
+
+  @override
+  Widget build(BuildContext context) {
+    if (isLoading) {
+      return const Center(child: CircularProgressIndicator());
+    }
+
+    if (loadError != null) {
+      return _ErrorState(message: loadError!, onRefresh: onRefresh);
+    }
+
+    if (title == 'ข่าวทั้งหมด') {
+      return _AnnouncementListContent(
+        title: title,
+        announcements: announcements,
+      );
+    }
+
+    if (title == 'รออนุมัติ') {
+      return _AnnouncementListContent(
+        title: title,
+        announcements: announcements
+            .where((_Announcement item) => _isPendingStatus(item.status))
+            .toList(),
+      );
+    }
+
+    if (title == 'ข่าวหมดอายุ') {
+      return _AnnouncementListContent(
+        title: title,
+        announcements: announcements
+            .where(
+              (_Announcement item) =>
+                  item.expiresAt != '-' && item.expiresAt.isNotEmpty,
+            )
+            .toList(),
+      );
+    }
+
+    if (title == 'จัดการผู้ใช้') {
+      return _MapListContent(
+        title: title,
+        icon: icon,
+        emptyMessage: 'ยังไม่มีผู้ใช้ในฐานข้อมูล',
+        rows: users,
+        titleBuilder: (Map<String, dynamic> row) => '${row['name'] ?? '-'}',
+        lineBuilder: (Map<String, dynamic> row) => <String>[
+          'อีเมล: ${row['email'] ?? '-'}',
+          'บทบาท: ${row['role'] ?? '-'}',
+          'คณะ ID: ${row['faculty_id'] ?? '-'}',
+        ],
+      );
+    }
+
+    if (title == 'จัดการคณะ') {
+      return _MapListContent(
+        title: title,
+        icon: icon,
+        emptyMessage: 'ยังไม่มีคณะในฐานข้อมูล',
+        rows: faculties,
+        titleBuilder: (Map<String, dynamic> row) => '${row['name'] ?? '-'}',
+        lineBuilder: (Map<String, dynamic> row) => <String>[
+          'รายละเอียด: ${row['description'] ?? '-'}',
+          'สร้างเมื่อ: ${row['created_at'] ?? '-'}',
+        ],
+      );
+    }
+
+    return _MenuPlaceholderMessage(title: title, icon: icon);
+  }
+}
+
+class _MenuPlaceholderMessage extends StatelessWidget {
+  const _MenuPlaceholderMessage({required this.title, required this.icon});
+
+  final String title;
+  final IconData icon;
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 560),
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: <Widget>[
+              Icon(icon, size: 56, color: const Color(0xFF4E49B7)),
+              const SizedBox(height: 16),
+              Text(
+                title,
+                textAlign: TextAlign.center,
+                style: const TextStyle(
+                  fontSize: 24,
+                  fontWeight: FontWeight.w800,
+                  color: Color(0xFF2D2A24),
+                ),
+              ),
+              const SizedBox(height: 8),
+              const Text(
+                'หน้านี้พร้อมเชื่อมต่อข้อมูลจริงในขั้นตอนถัดไป',
+                textAlign: TextAlign.center,
+                style: TextStyle(fontSize: 15, color: Color(0xFF6E6A61)),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _ErrorState extends StatelessWidget {
+  const _ErrorState({required this.message, required this.onRefresh});
+
+  final String message;
+  final Future<void> Function() onRefresh;
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: <Widget>[
+            const Icon(
+              Icons.error_outline_rounded,
+              size: 48,
+              color: Color(0xFFC74A47),
+            ),
+            const SizedBox(height: 12),
+            Text(
+              message,
+              textAlign: TextAlign.center,
+              style: const TextStyle(color: Color(0xFF433F36)),
+            ),
+            const SizedBox(height: 16),
+            FilledButton.icon(
+              onPressed: onRefresh,
+              icon: const Icon(Icons.refresh_rounded),
+              label: const Text('โหลดใหม่'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _EmptyState extends StatelessWidget {
+  const _EmptyState({required this.message});
+
+  final String message;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 28),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: const Color(0xFFDBD0BF)),
+      ),
+      child: Column(
+        children: <Widget>[
+          const Icon(Icons.inbox_outlined, color: Color(0xFF777267)),
+          const SizedBox(height: 8),
+          Text(
+            message,
+            textAlign: TextAlign.center,
+            style: const TextStyle(color: Color(0xFF676257)),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _SimpleDataCard extends StatelessWidget {
+  const _SimpleDataCard({required this.title, required this.lines});
+
+  final String title;
+  final List<String> lines;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: const Color(0xFFDBD0BF)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          Text(
+            title,
+            style: const TextStyle(
+              fontWeight: FontWeight.w800,
+              color: Color(0xFF2D2A24),
+            ),
+          ),
+          const SizedBox(height: 8),
+          ...lines.map(
+            (String line) => Padding(
+              padding: const EdgeInsets.only(top: 4),
+              child: Text(
+                line,
+                style: const TextStyle(color: Color(0xFF676257)),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _AnnouncementListContent extends StatelessWidget {
+  const _AnnouncementListContent({
+    required this.title,
+    required this.announcements,
+  });
+
+  final String title;
+  final List<_Announcement> announcements;
+
+  @override
+  Widget build(BuildContext context) {
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          Text(
+            title,
+            style: const TextStyle(
+              fontSize: 22,
+              fontWeight: FontWeight.w800,
+              color: Color(0xFF2D2A24),
+            ),
+          ),
+          const SizedBox(height: 12),
+          if (announcements.isEmpty)
+            const _EmptyState(message: 'ยังไม่มีข้อมูลในหน้านี้')
+          else
+            ListView.separated(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              itemCount: announcements.length,
+              separatorBuilder: (context, index) => const SizedBox(height: 12),
+              itemBuilder: (BuildContext context, int index) {
+                return _AnnouncementCard(
+                  announcement: announcements[index],
+                  compact: true,
+                  onActionPressed: (_) {},
+                );
+              },
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+class _MapListContent extends StatelessWidget {
+  const _MapListContent({
+    required this.title,
+    required this.icon,
+    required this.emptyMessage,
+    required this.rows,
+    required this.titleBuilder,
+    required this.lineBuilder,
+  });
+
+  final String title;
+  final IconData icon;
+  final String emptyMessage;
+  final List<Map<String, dynamic>> rows;
+  final String Function(Map<String, dynamic> row) titleBuilder;
+  final List<String> Function(Map<String, dynamic> row) lineBuilder;
+
+  @override
+  Widget build(BuildContext context) {
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          Row(
+            children: <Widget>[
+              Icon(icon, color: const Color(0xFF4E49B7)),
+              const SizedBox(width: 10),
+              Text(
+                title,
+                style: const TextStyle(
+                  fontSize: 22,
+                  fontWeight: FontWeight.w800,
+                  color: Color(0xFF2D2A24),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          if (rows.isEmpty)
+            _EmptyState(message: emptyMessage)
+          else
+            ListView.separated(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              itemCount: rows.length,
+              separatorBuilder: (context, index) => const SizedBox(height: 12),
+              itemBuilder: (BuildContext context, int index) {
+                final Map<String, dynamic> row = rows[index];
+                return _SimpleDataCard(
+                  title: titleBuilder(row),
+                  lines: lineBuilder(row),
+                );
+              },
+            ),
+        ],
+      ),
+    );
+  }
+}
+
 class _MenuDestinationPage extends StatefulWidget {
   const _MenuDestinationPage({required this.title, required this.icon});
 
@@ -790,7 +1404,6 @@ class _MenuDestinationPageState extends State<_MenuDestinationPage> {
 
         return Scaffold(
           key: _scaffoldKey,
-          drawerEnableOpenDragGesture: !isDesktop,
           appBar: isDesktop
               ? null
               : AppBar(
@@ -799,7 +1412,7 @@ class _MenuDestinationPageState extends State<_MenuDestinationPage> {
                   elevation: 0,
                   leading: IconButton(
                     tooltip: 'เมนู',
-                    onPressed: () => _scaffoldKey.currentState?.openDrawer(),
+                    onPressed: () => _scaffoldKey.currentState?.openEndDrawer(),
                     icon: const Icon(Icons.menu_rounded),
                   ),
                   title: Text(
@@ -809,10 +1422,12 @@ class _MenuDestinationPageState extends State<_MenuDestinationPage> {
                     style: const TextStyle(fontWeight: FontWeight.w800),
                   ),
                 ),
-          drawer: isDesktop
+          endDrawer: isDesktop
               ? null
               : Drawer(
-                  child: SafeArea(child: AppMenu(items: menuItems)),
+                  child: SafeArea(
+                    child: AppMenu(items: menuItems, closeOnTap: true),
+                  ),
                 ),
           body: SafeArea(
             top: isDesktop,
@@ -1634,6 +2249,32 @@ class _Announcement {
   final List<_Tag> tags;
   final List<String> actions;
   final Color? accent;
+
+  factory _Announcement.fromApi(Map<String, dynamic> row) {
+    final String status = _displayStatus(_textValue(row['status']));
+    final String priority = _displayPriority(_textValue(row['priority']));
+    final String faculty = _textValue(
+      row['target_faculty_name'] ?? row['faculty'] ?? row['target_type'],
+      fallback: 'ทุกคณะ',
+    );
+
+    return _Announcement(
+      title: _textValue(row['title']),
+      summary: _textValue(row['summary'], fallback: ''),
+      body: _textValue(row['content'] ?? row['body'] ?? row['summary']),
+      author: _textValue(row['creator_name'] ?? row['created_by']),
+      updatedAt: _textValue(row['updated_at'] ?? row['created_at']),
+      expiresAt: _textValue(row['expired_at']),
+      status: status,
+      priority: priority,
+      faculty: faculty,
+      tags: _makeTags(status: status, priority: priority, faculty: faculty),
+      accent: _isUrgentPriority(priority) ? const Color(0xFF5B57D8) : null,
+      actions: status == 'รออนุมัติ'
+          ? const <String>['แก้ไข', 'อนุมัติ']
+          : const <String>['แก้ไข', 'ลบ'],
+    );
+  }
 
   _Announcement copyWith({
     String? title,
