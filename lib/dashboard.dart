@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'widgets/app_menu.dart';
 
 class DashboardPage extends StatefulWidget {
   const DashboardPage({super.key});
@@ -8,6 +9,8 @@ class DashboardPage extends StatefulWidget {
 }
 
 class _DashboardPageState extends State<DashboardPage> {
+  final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
+
   String selectedFilter = 'ทั้งหมด';
   String selectedFaculty = 'ทุกคณะ';
 
@@ -17,15 +20,6 @@ class _DashboardPageState extends State<DashboardPage> {
     'ฉบับร่าง',
     'รออนุมัติ',
     'ด่วน',
-  ];
-
-  final List<_MenuItem> menuItems = const <_MenuItem>[
-    _MenuItem(Icons.dashboard_rounded, 'แดชบอร์ด', active: true),
-    _MenuItem(Icons.article_outlined, 'ข่าวทั้งหมด', count: '24'),
-    _MenuItem(Icons.access_time_rounded, 'รออนุมัติ', count: '5', countColor: Color(0xFFF3B7BC)),
-    _MenuItem(Icons.calendar_today_outlined, 'ข่าวหมดอายุ'),
-    _MenuItem(Icons.people_outline_rounded, 'จัดการผู้ใช้', section: 'จัดการระบบ'),
-    _MenuItem(Icons.school_outlined, 'จัดการคณะ'),
   ];
 
   final List<_StatCardData> statCards = const <_StatCardData>[
@@ -99,9 +93,11 @@ class _DashboardPageState extends State<DashboardPage> {
       actions: const <String>['แก้ไข', 'อนุมัติ'],
     ),
     _Announcement(
-      title: 'รับสมัครนักศึกษาเข้าร่วมโครงการแลกเปลี่ยนต่างประเทศ ประจำปีการศึกษา 2568',
+      title:
+          'รับสมัครนักศึกษาเข้าร่วมโครงการแลกเปลี่ยนต่างประเทศ ประจำปีการศึกษา 2568',
       summary: 'เปิดรับสมัครนักศึกษาที่สนใจเข้าร่วมโครงการ',
-      body: 'มหาวิทยาลัยเปิดรับสมัครนักศึกษาที่สนใจเข้าร่วมโครงการแลกเปลี่ยนกับมหาวิทยาลัยชั้นนำใน 12 ประเทศ',
+      body:
+          'มหาวิทยาลัยเปิดรับสมัครนักศึกษาที่สนใจเข้าร่วมโครงการแลกเปลี่ยนกับมหาวิทยาลัยชั้นนำใน 12 ประเทศ',
       author: 'กองวิเทศสัมพันธ์',
       updatedAt: '25 เม.ย. 68',
       expiresAt: '31 พ.ค. 68',
@@ -151,7 +147,9 @@ class _DashboardPageState extends State<DashboardPage> {
                         width: 10,
                         height: 10,
                         decoration: BoxDecoration(
-                          color: item.highlighted ? const Color(0xFF5B57D8) : const Color(0xFFC9C7C2),
+                          color: item.highlighted
+                              ? const Color(0xFF5B57D8)
+                              : const Color(0xFFC9C7C2),
                           shape: BoxShape.circle,
                         ),
                       ),
@@ -221,7 +219,9 @@ class _DashboardPageState extends State<DashboardPage> {
   }
 
   Future<void> _showEditNewsDialog(int index) async {
-    final _Announcement? updated = await _showAnnouncementEditor(existing: announcements[index]);
+    final _Announcement? updated = await _showAnnouncementEditor(
+      existing: announcements[index],
+    );
     if (updated == null) {
       return;
     }
@@ -231,11 +231,19 @@ class _DashboardPageState extends State<DashboardPage> {
     });
   }
 
-  Future<_Announcement?> _showAnnouncementEditor({_Announcement? existing}) async {
+  Future<_Announcement?> _showAnnouncementEditor({
+    _Announcement? existing,
+  }) async {
     final bool isEdit = existing != null;
-    final TextEditingController titleController = TextEditingController(text: existing?.title ?? '');
-    final TextEditingController summaryController = TextEditingController(text: existing?.summary ?? '');
-    final TextEditingController bodyController = TextEditingController(text: existing?.body ?? '');
+    final TextEditingController titleController = TextEditingController(
+      text: existing?.title ?? '',
+    );
+    final TextEditingController summaryController = TextEditingController(
+      text: existing?.summary ?? '',
+    );
+    final TextEditingController bodyController = TextEditingController(
+      text: existing?.body ?? '',
+    );
 
     String priority = existing?.priority ?? 'ปกติ';
     String faculty = existing?.faculty ?? 'ทั้งมหาวิทยาลัย';
@@ -247,153 +255,172 @@ class _DashboardPageState extends State<DashboardPage> {
       barrierColor: Colors.black45,
       builder: (BuildContext context) {
         return StatefulBuilder(
-          builder: (BuildContext context, void Function(void Function()) setDialogState) {
-            return _DashboardDialog(
-              title: isEdit ? 'แก้ไขข่าว' : 'สร้างข่าวใหม่',
-              maxWidth: 680,
-              body: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: <Widget>[
-                  _DialogFieldLabel(isEdit ? 'หัวข้อข่าว *' : 'หัวข้อข่าว *'),
-                  _DialogTextField(
-                    controller: titleController,
-                    hintText: 'กรอกหัวข้อข่าว...',
-                  ),
-                  if (!isEdit) ...<Widget>[
-                    const SizedBox(height: 14),
-                    const _DialogFieldLabel('สรุปข่าว'),
-                    _DialogTextField(
-                      controller: summaryController,
-                      hintText: 'สรุปสั้น ๆ (แสดงในหน้ารายการ)',
-                    ),
-                  ],
-                  const SizedBox(height: 14),
-                  const _DialogFieldLabel('เนื้อหา *'),
-                  _DialogTextField(
-                    controller: bodyController,
-                    hintText: 'กรอกเนื้อหาข่าว...',
-                    minLines: isEdit ? 4 : 5,
-                    maxLines: isEdit ? 4 : 5,
-                  ),
-                  const SizedBox(height: 18),
-                  Row(
+          builder:
+              (
+                BuildContext context,
+                void Function(void Function()) setDialogState,
+              ) {
+                return _DashboardDialog(
+                  title: isEdit ? 'แก้ไขข่าว' : 'สร้างข่าวใหม่',
+                  maxWidth: 680,
+                  body: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: <Widget>[
-                      Expanded(
-                        child: _DialogDropdown(
-                          label: 'ความสำคัญ',
-                          value: priority,
-                          items: const <String>['ปกติ', 'ด่วน'],
-                          onChanged: (String? value) {
-                            if (value == null) {
-                              return;
-                            }
-                            setDialogState(() => priority = value);
-                          },
-                        ),
+                      _DialogFieldLabel(
+                        isEdit ? 'หัวข้อข่าว *' : 'หัวข้อข่าว *',
                       ),
-                      const SizedBox(width: 14),
-                      Expanded(
-                        child: _DialogDropdown(
-                          label: 'กลุ่มเป้าหมาย',
-                          value: faculty,
-                          items: const <String>['ทั้งมหาวิทยาลัย', 'คณะวิศวกรรมศาสตร์', 'คณะบริหารธุรกิจ'],
-                          onChanged: (String? value) {
-                            if (value == null) {
-                              return;
-                            }
-                            setDialogState(() => faculty = value);
-                          },
-                        ),
+                      _DialogTextField(
+                        controller: titleController,
+                        hintText: 'กรอกหัวข้อข่าว...',
                       ),
-                    ],
-                  ),
-                  if (!isEdit) ...<Widget>[
-                    const SizedBox(height: 14),
-                    Row(
-                      children: <Widget>[
-                        Expanded(
-                          child: _DialogDateField(
-                            label: 'วันที่เผยแพร่',
-                            value: publishDate,
-                            onTap: () => setDialogState(() => publishDate = '04/28/2025'),
-                          ),
-                        ),
-                        const SizedBox(width: 14),
-                        Expanded(
-                          child: _DialogDateField(
-                            label: 'วันหมดอายุ',
-                            value: expireDate,
-                            onTap: () => setDialogState(() => expireDate = '05/28/2025'),
-                          ),
+                      if (!isEdit) ...<Widget>[
+                        const SizedBox(height: 14),
+                        const _DialogFieldLabel('สรุปข่าว'),
+                        _DialogTextField(
+                          controller: summaryController,
+                          hintText: 'สรุปสั้น ๆ (แสดงในหน้ารายการ)',
                         ),
                       ],
-                    ),
-                    const SizedBox(height: 14),
-                    const _DialogFieldLabel('แนบไฟล์'),
-                    Container(
-                      width: double.infinity,
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 18),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFF6F2E7),
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: const Color(0xFFE3D9C6)),
+                      const SizedBox(height: 14),
+                      const _DialogFieldLabel('เนื้อหา *'),
+                      _DialogTextField(
+                        controller: bodyController,
+                        hintText: 'กรอกเนื้อหาข่าว...',
+                        minLines: isEdit ? 4 : 5,
+                        maxLines: isEdit ? 4 : 5,
                       ),
-                      child: const Row(
+                      const SizedBox(height: 18),
+                      Row(
                         children: <Widget>[
-                          Icon(Icons.add_rounded, size: 22),
-                          SizedBox(width: 12),
-                          Text(
-                            'คลิกเพื่อเลือกไฟล์ (PDF, รูปภาพ)',
-                            style: TextStyle(
-                              fontSize: 15,
-                              fontWeight: FontWeight.w600,
+                          Expanded(
+                            child: _DialogDropdown(
+                              label: 'ความสำคัญ',
+                              value: priority,
+                              items: const <String>['ปกติ', 'ด่วน'],
+                              onChanged: (String? value) {
+                                if (value == null) {
+                                  return;
+                                }
+                                setDialogState(() => priority = value);
+                              },
+                            ),
+                          ),
+                          const SizedBox(width: 14),
+                          Expanded(
+                            child: _DialogDropdown(
+                              label: 'กลุ่มเป้าหมาย',
+                              value: faculty,
+                              items: const <String>[
+                                'ทั้งมหาวิทยาลัย',
+                                'คณะวิศวกรรมศาสตร์',
+                                'คณะบริหารธุรกิจ',
+                              ],
+                              onChanged: (String? value) {
+                                if (value == null) {
+                                  return;
+                                }
+                                setDialogState(() => faculty = value);
+                              },
                             ),
                           ),
                         ],
                       ),
-                    ),
-                  ],
-                ],
-              ),
-              footer: Row(
-                mainAxisAlignment: MainAxisAlignment.end,
-                children: <Widget>[
-                  OutlinedButton(
-                    onPressed: () => Navigator.of(context).pop(),
-                    child: const Text('ยกเลิก'),
-                  ),
-                  const SizedBox(width: 10),
-                  FilledButton.tonal(
-                    onPressed: () {
-                      final String title = titleController.text.trim();
-                      final String body = bodyController.text.trim();
-
-                      if (title.isEmpty || body.isEmpty) {
-                        return;
-                      }
-
-                      Navigator.of(context).pop(
-                        _buildAnnouncementFromForm(
-                          existing: existing,
-                          title: title,
-                          summary: summaryController.text.trim().isEmpty ? body : summaryController.text.trim(),
-                          body: body,
-                          priority: priority,
-                          faculty: faculty,
+                      if (!isEdit) ...<Widget>[
+                        const SizedBox(height: 14),
+                        Row(
+                          children: <Widget>[
+                            Expanded(
+                              child: _DialogDateField(
+                                label: 'วันที่เผยแพร่',
+                                value: publishDate,
+                                onTap: () => setDialogState(
+                                  () => publishDate = '04/28/2025',
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 14),
+                            Expanded(
+                              child: _DialogDateField(
+                                label: 'วันหมดอายุ',
+                                value: expireDate,
+                                onTap: () => setDialogState(
+                                  () => expireDate = '05/28/2025',
+                                ),
+                              ),
+                            ),
+                          ],
                         ),
-                      );
-                    },
-                    style: FilledButton.styleFrom(
-                      backgroundColor: Colors.white,
-                      foregroundColor: const Color(0xFF2D2A24),
-                      side: const BorderSide(color: Color(0xFFD7CEBE)),
-                    ),
-                    child: Text(isEdit ? 'บันทึก' : 'สร้างข่าว'),
+                        const SizedBox(height: 14),
+                        const _DialogFieldLabel('แนบไฟล์'),
+                        Container(
+                          width: double.infinity,
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 16,
+                            vertical: 18,
+                          ),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFF6F2E7),
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(color: const Color(0xFFE3D9C6)),
+                          ),
+                          child: const Row(
+                            children: <Widget>[
+                              Icon(Icons.add_rounded, size: 22),
+                              SizedBox(width: 12),
+                              Text(
+                                'คลิกเพื่อเลือกไฟล์ (PDF, รูปภาพ)',
+                                style: TextStyle(
+                                  fontSize: 15,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ],
                   ),
-                ],
-              ),
-            );
-          },
+                  footer: Row(
+                    mainAxisAlignment: MainAxisAlignment.end,
+                    children: <Widget>[
+                      OutlinedButton(
+                        onPressed: () => Navigator.of(context).pop(),
+                        child: const Text('ยกเลิก'),
+                      ),
+                      const SizedBox(width: 10),
+                      FilledButton.tonal(
+                        onPressed: () {
+                          final String title = titleController.text.trim();
+                          final String body = bodyController.text.trim();
+
+                          if (title.isEmpty || body.isEmpty) {
+                            return;
+                          }
+
+                          Navigator.of(context).pop(
+                            _buildAnnouncementFromForm(
+                              existing: existing,
+                              title: title,
+                              summary: summaryController.text.trim().isEmpty
+                                  ? body
+                                  : summaryController.text.trim(),
+                              body: body,
+                              priority: priority,
+                              faculty: faculty,
+                            ),
+                          );
+                        },
+                        style: FilledButton.styleFrom(
+                          backgroundColor: Colors.white,
+                          foregroundColor: const Color(0xFF2D2A24),
+                          side: const BorderSide(color: Color(0xFFD7CEBE)),
+                        ),
+                        child: Text(isEdit ? 'บันทึก' : 'สร้างข่าว'),
+                      ),
+                    ],
+                  ),
+                );
+              },
         );
       },
     );
@@ -441,11 +468,15 @@ class _DashboardPageState extends State<DashboardPage> {
       status == 'เผยแพร่แล้ว'
           ? const _Tag('เผยแพร่แล้ว', Color(0xFFCDE8B3), Color(0xFF507A1A))
           : status == 'รออนุมัติ'
-              ? const _Tag('รออนุมัติ', Color(0xFFF7D4A7), Color(0xFF9C5B00))
-              : const _Tag('ฉบับร่าง', Color(0xFFF1C66E), Color(0xFF855500)),
+          ? const _Tag('รออนุมัติ', Color(0xFFF7D4A7), Color(0xFF9C5B00))
+          : const _Tag('ฉบับร่าง', Color(0xFFF1C66E), Color(0xFF855500)),
       faculty == 'ทั้งมหาวิทยาลัย'
           ? const _Tag('ทั้งมหาวิทยาลัย', Color(0xFFBCE8D6), Color(0xFF1C7E65))
-          : const _Tag('คณะวิศวกรรมศาสตร์', Color(0xFFBBD5F2), Color(0xFF295C94)),
+          : const _Tag(
+              'คณะวิศวกรรมศาสตร์',
+              Color(0xFFBBD5F2),
+              Color(0xFF295C94),
+            ),
     ];
   }
 
@@ -473,7 +504,9 @@ class _DashboardPageState extends State<DashboardPage> {
                   text: '"${announcement.title}"',
                   style: const TextStyle(fontWeight: FontWeight.w700),
                 ),
-                const TextSpan(text: ' ใช่หรือไม่?\n\nการลบข่าวจะไม่สามารถกู้คืนได้'),
+                const TextSpan(
+                  text: ' ใช่หรือไม่?\n\nการลบข่าวจะไม่สามารถกู้คืนได้',
+                ),
               ],
             ),
           ),
@@ -527,24 +560,69 @@ class _DashboardPageState extends State<DashboardPage> {
       builder: (BuildContext context, BoxConstraints constraints) {
         final bool isDesktop = constraints.maxWidth >= 980;
         final bool isTablet = constraints.maxWidth >= 700;
+        final List<AppMenuItem> menuItems = _buildAppMenuItems(
+          context,
+          activeLabel: 'แดชบอร์ด',
+        );
 
         return Scaffold(
-          drawer: isDesktop ? null : Drawer(child: SafeArea(child: _Sidebar(menuItems: menuItems))),
+          key: _scaffoldKey,
+          drawerEnableOpenDragGesture: !isDesktop,
+          appBar: isDesktop
+              ? null
+              : AppBar(
+                  backgroundColor: const Color(0xFFF8F5EE),
+                  foregroundColor: const Color(0xFF2D2A24),
+                  elevation: 0,
+                  leading: IconButton(
+                    tooltip: 'เมนู',
+                    onPressed: () => _scaffoldKey.currentState?.openDrawer(),
+                    icon: const Icon(Icons.menu_rounded),
+                  ),
+                  title: const Text(
+                    'แดชบอร์ด',
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(fontWeight: FontWeight.w800),
+                  ),
+                  actions: <Widget>[
+                    IconButton(
+                      tooltip: 'การแจ้งเตือน',
+                      onPressed: _showNotificationsDialog,
+                      icon: const Icon(Icons.notifications_none_rounded),
+                    ),
+                    IconButton(
+                      tooltip: 'เพิ่มเติม',
+                      onPressed: () {},
+                      icon: const Icon(Icons.more_horiz_rounded),
+                    ),
+                  ],
+                ),
+          drawer: isDesktop
+              ? null
+              : Drawer(
+                  child: SafeArea(child: AppMenu(items: menuItems)),
+                ),
           body: SafeArea(
+            top: isDesktop,
             child: Row(
               children: <Widget>[
                 if (isDesktop)
-                  SizedBox(
-                    width: 264,
-                    child: _Sidebar(menuItems: menuItems),
-                  ),
+                  SizedBox(width: 264, child: AppMenu(items: menuItems)),
                 Expanded(
                   child: Container(
                     decoration: const BoxDecoration(
-                      border: Border(left: BorderSide(color: Color(0xFFE0D7C8))),
+                      border: Border(
+                        left: BorderSide(color: Color(0xFFE0D7C8)),
+                      ),
                     ),
                     child: SingleChildScrollView(
-                      padding: EdgeInsets.fromLTRB(isTablet ? 20 : 14, 16, isTablet ? 20 : 14, 24),
+                      padding: EdgeInsets.fromLTRB(
+                        isTablet ? 20 : 14,
+                        16,
+                        isTablet ? 20 : 14,
+                        24,
+                      ),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: <Widget>[
@@ -569,29 +647,221 @@ class _DashboardPageState extends State<DashboardPage> {
                             },
                           ),
                           const SizedBox(height: 16),
-                          Column(
-                            children: List<Widget>.generate(filteredAnnouncements.length, (int visibleIndex) {
-                              final _Announcement item = filteredAnnouncements[visibleIndex];
-                              final int actualIndex = announcements.indexOf(item);
-                              return Padding(
-                                padding: EdgeInsets.only(bottom: visibleIndex == filteredAnnouncements.length - 1 ? 0 : 12),
-                                child: _AnnouncementCard(
-                                  announcement: item,
-                                  compact: !isTablet,
-                                  onActionPressed: (String action) {
-                                    if (action == 'แก้ไข') {
-                                      _showEditNewsDialog(actualIndex);
-                                    } else if (action == 'ลบ') {
-                                      _showDeleteDialog(actualIndex);
-                                    } else if (action == 'อนุมัติ') {
-                                      _approveAnnouncement(actualIndex);
-                                    }
-                                  },
-                                ),
-                              );
-                            }),
+                          const Text(
+                            'ข่าวประกาศ',
+                            style: TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.w800,
+                              color: Color(0xFF2D2A24),
+                            ),
+                          ),
+                          const SizedBox(height: 12),
+                          ListView.separated(
+                            shrinkWrap: true,
+                            physics: const NeverScrollableScrollPhysics(),
+                            itemCount: filteredAnnouncements.length,
+                            separatorBuilder: (context, index) =>
+                                const SizedBox(height: 12),
+                            itemBuilder:
+                                (BuildContext context, int visibleIndex) {
+                                  final _Announcement item =
+                                      filteredAnnouncements[visibleIndex];
+                                  final int actualIndex = announcements.indexOf(
+                                    item,
+                                  );
+
+                                  return _AnnouncementCard(
+                                    announcement: item,
+                                    compact: !isTablet,
+                                    onActionPressed: (String action) {
+                                      if (action == 'แก้ไข') {
+                                        _showEditNewsDialog(actualIndex);
+                                      } else if (action == 'ลบ') {
+                                        _showDeleteDialog(actualIndex);
+                                      } else if (action == 'อนุมัติ') {
+                                        _approveAnnouncement(actualIndex);
+                                      }
+                                    },
+                                  );
+                                },
                           ),
                         ],
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+}
+
+List<AppMenuItem> _buildAppMenuItems(
+  BuildContext context, {
+  required String activeLabel,
+}) {
+  AppMenuItem item(
+    IconData icon,
+    String label, {
+    String? count,
+    Color? countColor,
+    String? section,
+  }) {
+    return AppMenuItem(
+      icon,
+      label,
+      active: activeLabel == label,
+      count: count,
+      countColor: countColor,
+      section: section,
+      onTap: activeLabel == label
+          ? null
+          : () => _openMenuDestination(context, label),
+    );
+  }
+
+  return <AppMenuItem>[
+    item(Icons.dashboard_rounded, 'แดชบอร์ด'),
+    item(Icons.article_outlined, 'ข่าวทั้งหมด', count: '24'),
+    item(
+      Icons.access_time_rounded,
+      'รออนุมัติ',
+      count: '5',
+      countColor: const Color(0xFFF3B7BC),
+    ),
+    item(Icons.calendar_today_outlined, 'ข่าวหมดอายุ'),
+    item(Icons.people_outline_rounded, 'จัดการผู้ใช้', section: 'จัดการระบบ'),
+    item(Icons.school_outlined, 'จัดการคณะ'),
+  ];
+}
+
+void _openMenuDestination(BuildContext context, String label) {
+  final Widget page = label == 'แดชบอร์ด'
+      ? const DashboardPage()
+      : _MenuDestinationPage(title: label, icon: _menuIconFor(label));
+
+  Navigator.of(
+    context,
+  ).pushReplacement(MaterialPageRoute<void>(builder: (_) => page));
+}
+
+IconData _menuIconFor(String label) {
+  switch (label) {
+    case 'ข่าวทั้งหมด':
+      return Icons.article_outlined;
+    case 'รออนุมัติ':
+      return Icons.access_time_rounded;
+    case 'ข่าวหมดอายุ':
+      return Icons.calendar_today_outlined;
+    case 'จัดการผู้ใช้':
+      return Icons.people_outline_rounded;
+    case 'จัดการคณะ':
+      return Icons.school_outlined;
+    default:
+      return Icons.dashboard_rounded;
+  }
+}
+
+class _MenuDestinationPage extends StatefulWidget {
+  const _MenuDestinationPage({required this.title, required this.icon});
+
+  final String title;
+  final IconData icon;
+
+  @override
+  State<_MenuDestinationPage> createState() => _MenuDestinationPageState();
+}
+
+class _MenuDestinationPageState extends State<_MenuDestinationPage> {
+  final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
+
+  @override
+  Widget build(BuildContext context) {
+    return LayoutBuilder(
+      builder: (BuildContext context, BoxConstraints constraints) {
+        final bool isDesktop = constraints.maxWidth >= 980;
+        final List<AppMenuItem> menuItems = _buildAppMenuItems(
+          context,
+          activeLabel: widget.title,
+        );
+
+        return Scaffold(
+          key: _scaffoldKey,
+          drawerEnableOpenDragGesture: !isDesktop,
+          appBar: isDesktop
+              ? null
+              : AppBar(
+                  backgroundColor: const Color(0xFFF8F5EE),
+                  foregroundColor: const Color(0xFF2D2A24),
+                  elevation: 0,
+                  leading: IconButton(
+                    tooltip: 'เมนู',
+                    onPressed: () => _scaffoldKey.currentState?.openDrawer(),
+                    icon: const Icon(Icons.menu_rounded),
+                  ),
+                  title: Text(
+                    widget.title,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(fontWeight: FontWeight.w800),
+                  ),
+                ),
+          drawer: isDesktop
+              ? null
+              : Drawer(
+                  child: SafeArea(child: AppMenu(items: menuItems)),
+                ),
+          body: SafeArea(
+            top: isDesktop,
+            child: Row(
+              children: <Widget>[
+                if (isDesktop)
+                  SizedBox(width: 264, child: AppMenu(items: menuItems)),
+                Expanded(
+                  child: Container(
+                    decoration: const BoxDecoration(
+                      border: Border(
+                        left: BorderSide(color: Color(0xFFE0D7C8)),
+                      ),
+                    ),
+                    child: Center(
+                      child: ConstrainedBox(
+                        constraints: const BoxConstraints(maxWidth: 560),
+                        child: Padding(
+                          padding: const EdgeInsets.all(24),
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: <Widget>[
+                              Icon(
+                                widget.icon,
+                                size: 56,
+                                color: const Color(0xFF4E49B7),
+                              ),
+                              const SizedBox(height: 16),
+                              Text(
+                                widget.title,
+                                textAlign: TextAlign.center,
+                                style: const TextStyle(
+                                  fontSize: 24,
+                                  fontWeight: FontWeight.w800,
+                                  color: Color(0xFF2D2A24),
+                                ),
+                              ),
+                              const SizedBox(height: 8),
+                              const Text(
+                                'หน้านี้พร้อมเชื่อมต่อข้อมูลจริงในขั้นตอนถัดไป',
+                                textAlign: TextAlign.center,
+                                style: TextStyle(
+                                  fontSize: 15,
+                                  color: Color(0xFF6E6A61),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
                       ),
                     ),
                   ),
@@ -620,110 +890,112 @@ class _ResponsiveTopBar extends StatelessWidget {
   Widget build(BuildContext context) {
     return LayoutBuilder(
       builder: (BuildContext context, BoxConstraints constraints) {
-        final double availableWidth = constraints.maxWidth.isFinite ? constraints.maxWidth : 420;
-        final double searchWidth = isDesktop ? 360 : availableWidth.clamp(180.0, 420.0).toDouble();
+        final double availableWidth = constraints.maxWidth.isFinite
+            ? constraints.maxWidth
+            : 420;
+        final bool isPhone = availableWidth < 560;
 
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: <Widget>[
-            Wrap(
-              spacing: 12,
-              runSpacing: 12,
-              crossAxisAlignment: WrapCrossAlignment.center,
+            if (isDesktop) ...<Widget>[
+              Row(
+                children: <Widget>[
+                  const Expanded(
+                    child: Text(
+                      'แดชบอร์ด',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        fontSize: 22,
+                        height: 1.15,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                  ),
+                  _IconSurface(
+                    size: isPhone ? 46 : 52,
+                    overlayDot: true,
+                    child: IconButton(
+                      tooltip: 'การแจ้งเตือน',
+                      onPressed: onNotificationsTap,
+                      icon: const Icon(
+                        Icons.notifications_none_rounded,
+                        size: 22,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  const _IconSurface(
+                    size: 46,
+                    fillColor: Colors.white,
+                    child: Icon(Icons.more_horiz_rounded),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
+            ],
+            Flex(
+              direction: isPhone ? Axis.vertical : Axis.horizontal,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
               children: <Widget>[
-                if (!isDesktop)
-                  Builder(
-                    builder: (BuildContext context) {
-                      return _IconSurface(
-                        size: 56,
-                        child: IconButton(
-                          onPressed: () => Scaffold.of(context).openDrawer(),
-                          icon: const Icon(Icons.menu_rounded),
-                        ),
-                      );
-                    },
-                  ),
-                const SizedBox(
-                  width: 72,
-                  child: Text(
-                    'แดช\nบอร์ด',
-                    maxLines: 2,
-                    style: TextStyle(
-                      fontSize: 18,
-                      height: 1.15,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                ),
+                if (isPhone)
+                  const _SearchBox()
+                else
+                  const Expanded(child: _SearchBox()),
+                SizedBox(width: isPhone ? 0 : 12, height: isPhone ? 10 : 0),
                 SizedBox(
-                  width: searchWidth,
-                  child: Container(
-                    height: 46,
-                    padding: const EdgeInsets.symmetric(horizontal: 14),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(14),
-                      border: Border.all(color: const Color(0xFFD8CEBC)),
-                    ),
-                    child: const Row(
-                      children: <Widget>[
-                        Icon(Icons.search_rounded, size: 20, color: Color(0xFF6C685D)),
-                        SizedBox(width: 10),
-                        Expanded(
-                          child: Text(
-                            'ค้นหาข่าว...',
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: TextStyle(
-                              color: Color(0xFF8A857A),
-                              fontSize: 15,
-                            ),
-                          ),
-                        ),
-                      ],
+                  width: isPhone ? double.infinity : null,
+                  child: FilledButton.icon(
+                    onPressed: onCreateTap,
+                    icon: const Icon(Icons.add_rounded),
+                    label: const Text('สร้างข่าวใหม่'),
+                    style: FilledButton.styleFrom(
+                      minimumSize: const Size(0, 48),
+                      backgroundColor: const Color(0xFF4E49B7),
+                      foregroundColor: Colors.white,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(14),
+                      ),
                     ),
                   ),
-                ),
-                _IconSurface(
-                  child: IconButton(
-                    onPressed: onNotificationsTap,
-                    icon: const Icon(Icons.notifications_none_rounded, size: 22),
-                  ),
-                  overlayDot: true,
-                ),
-                InkWell(
-                  onTap: onCreateTap,
-                  borderRadius: BorderRadius.circular(16),
-                  child: Container(
-                    height: 58,
-                    padding: const EdgeInsets.symmetric(horizontal: 18),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(16),
-                      border: Border.all(color: const Color(0xFFD8CEBC)),
-                    ),
-                    child: const Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: <Widget>[
-                        Icon(Icons.add_rounded, size: 20),
-                        SizedBox(width: 6),
-                        Text(
-                          '+ สร้าง\nข่าวใหม่',
-                          style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-                const _IconSurface(
-                  child: Icon(Icons.more_horiz_rounded),
-                  fillColor: Colors.white,
                 ),
               ],
             ),
           ],
         );
       },
+    );
+  }
+}
+
+class _SearchBox extends StatelessWidget {
+  const _SearchBox();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      height: 48,
+      padding: const EdgeInsets.symmetric(horizontal: 14),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: const Color(0xFFD8CEBC)),
+      ),
+      child: const Row(
+        children: <Widget>[
+          Icon(Icons.search_rounded, size: 20, color: Color(0xFF6C685D)),
+          SizedBox(width: 10),
+          Expanded(
+            child: Text(
+              'ค้นหาข่าว...',
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(color: Color(0xFF8A857A), fontSize: 15),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
@@ -745,7 +1017,9 @@ class _StatsGrid extends StatelessWidget {
       builder: (BuildContext context, BoxConstraints constraints) {
         final double cardWidth = isDesktop
             ? (constraints.maxWidth - 36) / 4
-            : (isTablet ? (constraints.maxWidth - 12) / 2 : constraints.maxWidth);
+            : (isTablet
+                  ? (constraints.maxWidth - 12) / 2
+                  : constraints.maxWidth);
 
         return Wrap(
           spacing: 12,
@@ -754,7 +1028,10 @@ class _StatsGrid extends StatelessWidget {
             return SizedBox(
               width: cardWidth,
               child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 18,
+                  vertical: 14,
+                ),
                 decoration: BoxDecoration(
                   color: const Color(0xFFF7F4EC),
                   borderRadius: BorderRadius.circular(16),
@@ -823,7 +1100,9 @@ class _FilterRow extends StatelessWidget {
             selected: selectedFilter == filter,
             onSelected: (_) => onFilterChanged(filter),
             labelStyle: TextStyle(
-              color: selectedFilter == filter ? const Color(0xFF4B47C3) : const Color(0xFF59554B),
+              color: selectedFilter == filter
+                  ? const Color(0xFF4B47C3)
+                  : const Color(0xFF59554B),
               fontWeight: FontWeight.w600,
             ),
             showCheckmark: false,
@@ -838,10 +1117,7 @@ class _FilterRow extends StatelessWidget {
         const SizedBox(width: 10),
         const Text(
           'คณะ:',
-          style: TextStyle(
-            fontSize: 15,
-            color: Color(0xFF5E5A50),
-          ),
+          style: TextStyle(fontSize: 15, color: Color(0xFF5E5A50)),
         ),
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
@@ -909,7 +1185,9 @@ class _AnnouncementCard extends StatelessWidget {
                               Wrap(
                                 spacing: 8,
                                 runSpacing: 8,
-                                children: announcement.tags.map((_Tag tag) => _TagPill(tag: tag)).toList(),
+                                children: announcement.tags
+                                    .map((_Tag tag) => _TagPill(tag: tag))
+                                    .toList(),
                               ),
                               const SizedBox(height: 10),
                               Text(
@@ -929,7 +1207,9 @@ class _AnnouncementCard extends StatelessWidget {
                                 child: Wrap(
                                   spacing: 8,
                                   runSpacing: 8,
-                                  children: announcement.tags.map((_Tag tag) => _TagPill(tag: tag)).toList(),
+                                  children: announcement.tags
+                                      .map((_Tag tag) => _TagPill(tag: tag))
+                                      .toList(),
                                 ),
                               ),
                               const SizedBox(width: 12),
@@ -987,7 +1267,10 @@ class _AnnouncementCard extends StatelessWidget {
                         return OutlinedButton(
                           onPressed: () => onActionPressed(action),
                           style: OutlinedButton.styleFrom(
-                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 16,
+                              vertical: 12,
+                            ),
                             side: const BorderSide(color: Color(0xFFCBC0AF)),
                             foregroundColor: const Color(0xFF37342E),
                             shape: RoundedRectangleBorder(
@@ -1032,162 +1315,6 @@ class _TagPill extends StatelessWidget {
           fontSize: 13,
           fontWeight: FontWeight.w600,
         ),
-      ),
-    );
-  }
-}
-
-class _Sidebar extends StatelessWidget {
-  const _Sidebar({required this.menuItems});
-
-  final List<_MenuItem> menuItems;
-
-  @override
-  Widget build(BuildContext context) {
-    String? currentSection;
-
-    return Container(
-      color: const Color(0xFFF8F5EE),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: <Widget>[
-          Padding(
-            padding: const EdgeInsets.fromLTRB(18, 18, 18, 16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: const <Widget>[
-                Text(
-                  'UniAnnounce',
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800),
-                ),
-                SizedBox(height: 4),
-                Text(
-                  'ระบบประกาศข่าวมหาวิทยาลัย',
-                  style: TextStyle(
-                    fontSize: 13,
-                    color: Color(0xFF5E5A50),
-                  ),
-                ),
-              ],
-            ),
-          ),
-          const Divider(height: 1, color: Color(0xFFE1D8C8)),
-          Padding(
-            padding: const EdgeInsets.fromLTRB(18, 12, 18, 14),
-            child: Row(
-              children: <Widget>[
-                Container(
-                  height: 40,
-                  width: 40,
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFD8D2FF),
-                    borderRadius: BorderRadius.circular(999),
-                  ),
-                  alignment: Alignment.center,
-                  child: const Text(
-                    'AK',
-                    style: TextStyle(
-                      fontWeight: FontWeight.w700,
-                      color: Color(0xFF4E49B7),
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 12),
-                const Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: <Widget>[
-                      Text(
-                        'อรรถกร กิติ',
-                        style: TextStyle(fontWeight: FontWeight.w700),
-                      ),
-                      SizedBox(height: 2),
-                      Text(
-                        'Admin',
-                        style: TextStyle(
-                          color: Color(0xFF555147),
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ),
-          const Divider(height: 1, color: Color(0xFFE1D8C8)),
-          Expanded(
-            child: ListView(
-              padding: const EdgeInsets.fromLTRB(12, 16, 12, 20),
-              children: menuItems.map((_MenuItem item) {
-                final List<Widget> sectionWidgets = <Widget>[];
-
-                if (item.section != null && item.section != currentSection) {
-                  currentSection = item.section;
-                  sectionWidgets.add(
-                    Padding(
-                      padding: const EdgeInsets.fromLTRB(8, 8, 8, 8),
-                      child: Text(
-                        item.section!,
-                        style: const TextStyle(
-                          color: Color(0xFF726D62),
-                          fontSize: 14,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ),
-                  );
-                }
-
-                sectionWidgets.add(
-                  Container(
-                    margin: const EdgeInsets.only(bottom: 6),
-                    decoration: BoxDecoration(
-                      color: item.active ? const Color(0xFFE5E3FF) : Colors.transparent,
-                      borderRadius: BorderRadius.circular(14),
-                    ),
-                    child: ListTile(
-                      dense: true,
-                      leading: Icon(
-                        item.icon,
-                        color: item.active ? const Color(0xFF4E49B7) : const Color(0xFF4D4940),
-                      ),
-                      title: Text(
-                        item.label,
-                        style: TextStyle(
-                          fontWeight: item.active ? FontWeight.w700 : FontWeight.w600,
-                          color: item.active ? const Color(0xFF4E49B7) : const Color(0xFF4D4940),
-                        ),
-                      ),
-                      trailing: item.count == null
-                          ? null
-                          : Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
-                              decoration: BoxDecoration(
-                                color: item.countColor ?? const Color(0xFFD9D1FF),
-                                borderRadius: BorderRadius.circular(999),
-                              ),
-                              child: Text(
-                                item.count!,
-                                style: const TextStyle(
-                                  fontWeight: FontWeight.w700,
-                                  color: Color(0xFF443F9D),
-                                ),
-                              ),
-                            ),
-                      onTap: () {},
-                    ),
-                  ),
-                );
-
-                return Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: sectionWidgets,
-                );
-              }).toList(),
-            ),
-          ),
-        ],
       ),
     );
   }
@@ -1287,10 +1414,7 @@ class _DialogFieldLabel extends StatelessWidget {
       padding: const EdgeInsets.only(bottom: 8),
       child: Text(
         text,
-        style: const TextStyle(
-          fontSize: 14,
-          fontWeight: FontWeight.w600,
-        ),
+        style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
       ),
     );
   }
@@ -1319,7 +1443,10 @@ class _DialogTextField extends StatelessWidget {
         hintText: hintText,
         filled: true,
         fillColor: Colors.white,
-        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 16,
+          vertical: 16,
+        ),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
           borderSide: const BorderSide(color: Color(0xFFD9CFBE)),
@@ -1353,16 +1480,19 @@ class _DialogDropdown extends StatelessWidget {
       children: <Widget>[
         _DialogFieldLabel(label),
         DropdownButtonFormField<String>(
-          value: value,
+          initialValue: value,
           onChanged: onChanged,
           items: items
-              .map((String item) => DropdownMenuItem<String>(
-                    value: item,
-                    child: Text(item),
-                  ))
+              .map(
+                (String item) =>
+                    DropdownMenuItem<String>(value: item, child: Text(item)),
+              )
               .toList(),
           decoration: InputDecoration(
-            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 16,
+              vertical: 14,
+            ),
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
               borderSide: const BorderSide(color: Color(0xFFD9CFBE)),
@@ -1407,10 +1537,7 @@ class _DialogDateField extends StatelessWidget {
             child: Row(
               children: <Widget>[
                 Expanded(
-                  child: Text(
-                    value,
-                    style: const TextStyle(fontSize: 15),
-                  ),
+                  child: Text(value, style: const TextStyle(fontSize: 15)),
                 ),
                 const Icon(Icons.calendar_today_outlined, size: 20),
               ],
@@ -1468,24 +1595,6 @@ class _IconSurface extends StatelessWidget {
       ),
     );
   }
-}
-
-class _MenuItem {
-  const _MenuItem(
-    this.icon,
-    this.label, {
-    this.active = false,
-    this.count,
-    this.countColor,
-    this.section,
-  });
-
-  final IconData icon;
-  final String label;
-  final bool active;
-  final String? count;
-  final Color? countColor;
-  final String? section;
 }
 
 class _StatCardData {
