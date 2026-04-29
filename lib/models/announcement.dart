@@ -15,6 +15,7 @@ class Announcement {
     required this.createdAt,
     required this.updatedAt,
     required this.expiredAt,
+    this.attachments = const <AnnouncementAttachment>[],
   });
 
   final int id;
@@ -30,12 +31,22 @@ class Announcement {
   final String createdAt;
   final String updatedAt;
   final String expiredAt;
+  final List<AnnouncementAttachment> attachments;
 
   bool get isPublished => status == 'published' || status == 'publish';
   bool get isPending => status == 'pending' || status == 'waiting';
   bool get isDraft => status == 'draft';
   bool get isUrgent => priority == 'urgent' || priority == 'high';
   bool get isAllFaculty => targetType == 'all' || targetFacultyId == null;
+  String? get imageUrl {
+    for (final AnnouncementAttachment attachment in attachments) {
+      if (attachment.isImage) return attachment.fileUrl;
+    }
+    return null;
+  }
+
+  bool get hasImage => imageUrl != null;
+
   bool get isExpired {
     if (expiredAt.isEmpty || expiredAt == '-') return false;
     final DateTime? date = DateTime.tryParse(expiredAt);
@@ -64,7 +75,9 @@ class Announcement {
 
   factory Announcement.fromJson(Map<String, dynamic> json) {
     final String targetType = _text(json['target_type'], fallback: 'all');
-    final int? targetFacultyId = int.tryParse('${json['target_faculty_id'] ?? ''}');
+    final int? targetFacultyId = int.tryParse(
+      '${json['target_faculty_id'] ?? ''}',
+    );
     return Announcement(
       id: int.tryParse('${json['id'] ?? 0}') ?? 0,
       title: _text(json['title']),
@@ -82,6 +95,10 @@ class Announcement {
       createdAt: _text(json['created_at']),
       updatedAt: _text(json['updated_at'] ?? json['created_at']),
       expiredAt: _text(json['expired_at']),
+      attachments: (json['attachments'] as List<dynamic>? ?? <dynamic>[])
+          .whereType<Map<String, dynamic>>()
+          .map(AnnouncementAttachment.fromJson)
+          .toList(),
     );
   }
 
@@ -96,7 +113,9 @@ class Announcement {
       'target_type': targetType,
       'target_faculty_id': targetFacultyId,
       'expired_at': expiredAt == '-' ? null : expiredAt,
-      'published_at': status == 'published' ? DateTime.now().toIso8601String() : null,
+      'published_at': status == 'published'
+          ? DateTime.now().toIso8601String()
+          : null,
     };
   }
 
@@ -114,6 +133,7 @@ class Announcement {
     String? createdAt,
     String? updatedAt,
     String? expiredAt,
+    List<AnnouncementAttachment>? attachments,
   }) {
     return Announcement(
       id: id ?? this.id,
@@ -129,6 +149,35 @@ class Announcement {
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
       expiredAt: expiredAt ?? this.expiredAt,
+      attachments: attachments ?? this.attachments,
+    );
+  }
+}
+
+class AnnouncementAttachment {
+  const AnnouncementAttachment({
+    required this.id,
+    required this.announcementId,
+    required this.fileUrl,
+    required this.fileType,
+    required this.uploadedAt,
+  });
+
+  final int id;
+  final int announcementId;
+  final String fileUrl;
+  final String fileType;
+  final String uploadedAt;
+
+  bool get isImage => fileType.toLowerCase().startsWith('image/');
+
+  factory AnnouncementAttachment.fromJson(Map<String, dynamic> json) {
+    return AnnouncementAttachment(
+      id: int.tryParse('${json['id'] ?? 0}') ?? 0,
+      announcementId: int.tryParse('${json['announcement_id'] ?? 0}') ?? 0,
+      fileUrl: _text(json['file_url'], fallback: ''),
+      fileType: _text(json['file_type'], fallback: ''),
+      uploadedAt: _text(json['uploaded_at']),
     );
   }
 }
