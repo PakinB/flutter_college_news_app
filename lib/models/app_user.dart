@@ -17,6 +17,8 @@ class AppUser {
   bool get isPr => role.toLowerCase() == 'pr';
   bool get isTeacher => role.toLowerCase() == 'teacher';
   bool get isStudent => role.toLowerCase() == 'student';
+  bool get isEmployee => role.toLowerCase() == 'employee';
+  bool get isRecipientOnly => isStudent || isEmployee;
   bool get canCreateNews => isAdmin || isPr || isTeacher;
   bool get canManageSystem => isAdmin;
 
@@ -31,6 +33,9 @@ class AppUser {
       case 'student':
       case 'user':
         return 'นักศึกษา';
+      case 'employee':
+      case 'staff':
+        return 'พนักงาน';
       default:
         return role.isEmpty ? '-' : role;
     }
@@ -83,6 +88,10 @@ String _normalizeRole(dynamic value) {
     case 'user':
     case 'นักศึกษา':
       return 'student';
+    case 'employee':
+    case 'staff':
+    case 'พนักงาน':
+      return 'employee';
     default:
       return role;
   }

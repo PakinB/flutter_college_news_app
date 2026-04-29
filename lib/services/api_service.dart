@@ -13,6 +13,7 @@ class ApiService {
 
   Future<List<Announcement>> fetchAnnouncements({
     int? visibleFacultyId,
+    String? visibleRole,
     String? status,
   }) async {
     final Map<String, String> query = <String, String>{};
@@ -21,6 +22,9 @@ class ApiService {
     }
     if (visibleFacultyId != null) {
       query['visible_faculty_id'] = '$visibleFacultyId';
+    }
+    if (visibleRole != null && visibleRole.trim().isNotEmpty) {
+      query['visible_role'] = visibleRole.trim().toLowerCase();
     }
 
     final List<dynamic> rows = await _getList('announcements/index.php', query);

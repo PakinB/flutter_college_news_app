@@ -111,6 +111,7 @@ class UsersPage extends StatelessWidget {
                       DropdownMenuItem(value: 'pr', child: Text('ผู้ประกาศข่าว')),
                       DropdownMenuItem(value: 'teacher', child: Text('อาจารย์')),
                       DropdownMenuItem(value: 'student', child: Text('นักศึกษา')),
+                      DropdownMenuItem(value: 'employee', child: Text('พนักงาน')),
                     ],
                     onChanged: (String? value) => setDialogState(() => role = value ?? role),
                   ),
@@ -153,7 +154,9 @@ class UsersPage extends StatelessWidget {
 
 String _normalizeRole(dynamic value) {
   final String role = '${value ?? 'student'}'.trim().toLowerCase();
-  return role == 'user' ? 'student' : role;
+  if (role == 'user') return 'student';
+  if (role == 'staff') return 'employee';
+  return role;
 }
 
 String _roleLabel(dynamic value) {
@@ -166,6 +169,8 @@ String _roleLabel(dynamic value) {
       return 'อาจารย์';
     case 'student':
       return 'นักศึกษา';
+    case 'employee':
+      return 'พนักงาน';
     default:
       return '-';
   }

@@ -10,10 +10,19 @@ $role = $data['role'] ?? 'student';
 if ($role === 'user') {
     $role = 'student';
 }
-$faculty_id = $data['faculty_id'];
+if ($role === 'staff') {
+    $role = 'employee';
+}
+$allowed_roles = ['admin', 'pr', 'teacher', 'student', 'employee'];
+if (!in_array($role, $allowed_roles, true)) {
+    $role = 'student';
+}
+$faculty_id = isset($data['faculty_id']) && $data['faculty_id'] !== ''
+    ? (int)$data['faculty_id']
+    : null;
 
 $sql = "INSERT INTO users (name, email, password, role, faculty_id)
-        VALUES ('$name', '$email', '$password', '$role', '$faculty_id')";
+        VALUES ('$name', '$email', '$password', '$role', " . ($faculty_id === null ? "NULL" : "'$faculty_id'") . ")";
 
 $check = $conn->query("SELECT id FROM users WHERE email='$email'");
 if ($check->num_rows > 0) {

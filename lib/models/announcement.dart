@@ -37,7 +37,10 @@ class Announcement {
   bool get isPending => status == 'pending' || status == 'waiting';
   bool get isDraft => status == 'draft';
   bool get isUrgent => priority == 'urgent' || priority == 'high';
-  bool get isAllFaculty => targetType == 'all' || targetFacultyId == null;
+  bool get isEmployeeTarget => targetType == 'employee' || targetType == 'staff';
+  bool get isFacultyTarget => targetType == 'faculty' && targetFacultyId != null;
+  bool get isAllFaculty =>
+      targetType == 'all' || (!isEmployeeTarget && targetFacultyId == null);
   String? get imageUrl {
     for (final AnnouncementAttachment attachment in attachments) {
       if (attachment.isImage) return attachment.fileUrl;
@@ -70,11 +73,14 @@ class Announcement {
   }
 
   String get priorityLabel => isUrgent ? 'ด่วน' : 'ปกติ';
-  String get targetLabel => isAllFaculty ? 'ทุกคณะ' : targetFacultyName;
+  String get targetLabel {
+    if (isEmployeeTarget) return 'พนักงาน';
+    return isAllFaculty ? 'ทุกคน' : targetFacultyName;
+  }
   Color? get accent => isUrgent ? const Color(0xFF5B57D8) : null;
 
   factory Announcement.fromJson(Map<String, dynamic> json) {
-    final String targetType = _text(json['target_type'], fallback: 'all');
+    final String targetType = _text(json['target_type'], fallback: 'all').toLowerCase();
     final int? targetFacultyId = int.tryParse(
       '${json['target_faculty_id'] ?? ''}',
     );
@@ -90,7 +96,11 @@ class Announcement {
       targetFacultyId: targetFacultyId,
       targetFacultyName: _text(
         json['target_faculty_name'] ?? json['faculty'],
-        fallback: targetType == 'all' ? 'ทุกคณะ' : '-',
+        fallback: targetType == 'employee'
+            ? 'พนักงาน'
+            : targetType == 'all'
+                ? 'ทุกคน'
+                : '-',
       ),
       createdAt: _text(json['created_at']),
       updatedAt: _text(json['updated_at'] ?? json['created_at']),
