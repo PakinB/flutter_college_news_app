@@ -55,7 +55,7 @@ class AppMenu extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: const <Widget>[
                 Text(
-                  'UniAnnounce',
+                  'College News Notifications',
                   style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800),
                 ),
                 SizedBox(height: 4),

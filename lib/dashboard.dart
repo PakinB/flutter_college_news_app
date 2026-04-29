@@ -409,12 +409,12 @@ class _DashboardPageState extends State<DashboardPage> {
                   ),
                   title: Text(_showMenu ? 'เมนู' : _activeMenu),
                   actions: <Widget>[
-                    if (currentUser.canCreateNews)
-                      IconButton(
-                        tooltip: 'สร้างข่าว',
-                        onPressed: _createNews,
-                        icon: const Icon(Icons.add_rounded),
-                      ),
+                    // if (currentUser.canCreateNews)
+                    //   IconButton(
+                    //     tooltip: 'สร้างข่าว',
+                    //     onPressed: _createNews,
+                    //     icon: const Icon(Icons.add_rounded),
+                    //   ),
                     IconButton(
                       tooltip: 'ออกจากระบบ',
                       onPressed: _logout,
