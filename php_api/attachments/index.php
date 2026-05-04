@@ -38,6 +38,31 @@ function delete_announcement_image_files($conn, $announcement_id) {
     $delete_stmt->execute();
 }
 
+function delete_announcement_non_image_files($conn, $announcement_id) {
+    $stmt = $conn->prepare(
+        "SELECT id, file_url
+         FROM attachments
+         WHERE announcement_id = ? AND file_type NOT LIKE 'image/%'"
+    );
+    $stmt->bind_param("i", $announcement_id);
+    $stmt->execute();
+
+    foreach (db_fetch_all($stmt->get_result()) as $attachment) {
+        $file_name = basename(parse_url($attachment["file_url"], PHP_URL_PATH));
+        $file_path = __DIR__ . "/../images/" . $file_name;
+        if (is_file($file_path)) {
+            unlink($file_path);
+        }
+    }
+
+    $delete_stmt = $conn->prepare(
+        "DELETE FROM attachments
+         WHERE announcement_id = ? AND file_type NOT LIKE 'image/%'"
+    );
+    $delete_stmt->bind_param("i", $announcement_id);
+    $delete_stmt->execute();
+}
+
 if ($method === "GET") {
     if ($id) {
         $stmt = $conn->prepare(
@@ -86,20 +111,43 @@ if ($method === "POST") {
         }
 
         if ($_FILES["file"]["error"] !== UPLOAD_ERR_OK) {
-            send_json(["status" => "error", "message" => "Image upload failed"], 400);
+            send_json(["status" => "error", "message" => "File upload failed"], 400);
         }
 
         $tmp_path = $_FILES["file"]["tmp_name"];
-        $file_type = mime_content_type($tmp_path);
-        $allowed_types = [
+        $original_name = $_FILES["file"]["name"] ?? "";
+        $file_type = mime_content_type($tmp_path) ?: "application/octet-stream";
+        $extension = strtolower(pathinfo($original_name, PATHINFO_EXTENSION));
+        $allowed_mime_types = [
             "image/jpeg" => "jpg",
             "image/png" => "png",
             "image/gif" => "gif",
             "image/webp" => "webp",
+            "application/pdf" => "pdf",
+            "text/plain" => "txt",
+            "text/csv" => "csv",
+            "application/msword" => "doc",
+            "application/vnd.openxmlformats-officedocument.wordprocessingml.document" => "docx",
+            "application/vnd.ms-excel" => "xls",
+            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" => "xlsx",
+            "application/vnd.ms-powerpoint" => "ppt",
+            "application/vnd.openxmlformats-officedocument.presentationml.presentation" => "pptx",
+            "application/zip" => "zip",
+            "application/x-zip-compressed" => "zip",
+        ];
+        $allowed_extensions = [
+            "jpg", "jpeg", "png", "gif", "webp",
+            "pdf", "txt", "csv",
+            "doc", "docx", "xls", "xlsx", "ppt", "pptx",
+            "zip"
         ];
 
-        if (!isset($allowed_types[$file_type])) {
-            send_json(["status" => "error", "message" => "Only image files are allowed"], 400);
+        if (isset($allowed_mime_types[$file_type])) {
+            $extension = $allowed_mime_types[$file_type];
+        }
+
+        if (!in_array($extension, $allowed_extensions, true)) {
+            send_json(["status" => "error", "message" => "File type is not allowed"], 400);
         }
 
         $image_dir = __DIR__ . "/../images";
@@ -111,11 +159,11 @@ if ($method === "POST") {
             delete_announcement_image_files($conn, $announcement_id);
         }
 
-        $file_name = "announcement_" . $announcement_id . "_" . bin2hex(random_bytes(8)) . "." . $allowed_types[$file_type];
+        $file_name = "announcement_" . $announcement_id . "_" . bin2hex(random_bytes(8)) . "." . $extension;
         $target_path = $image_dir . "/" . $file_name;
 
         if (!move_uploaded_file($tmp_path, $target_path)) {
-            send_json(["status" => "error", "message" => "Could not save uploaded image"], 500);
+            send_json(["status" => "error", "message" => "Could not save uploaded file"], 500);
         }
 
         $file_url = public_image_url($file_name);
@@ -159,6 +207,27 @@ if ($method === "POST") {
 }
 
 if ($method === "DELETE") {
+    if ($announcement_id) {
+        $type = strtolower(trim($_GET["type"] ?? ""));
+        if ($type === "image" || $type === "images") {
+            delete_announcement_image_files($conn, $announcement_id);
+            send_json(["status" => "success"]);
+        }
+        if ($type === "file" || $type === "files") {
+            delete_announcement_non_image_files($conn, $announcement_id);
+            send_json(["status" => "success"]);
+        }
+
+        $stmt = $conn->prepare("DELETE FROM attachments WHERE announcement_id = ?");
+        $stmt->bind_param("i", $announcement_id);
+
+        if (!$stmt->execute()) {
+            send_json(["status" => "error", "message" => $stmt->error], 500);
+        }
+
+        send_json(["status" => "success"]);
+    }
+
     if (!$id) {
         send_json(["status" => "error", "message" => "Missing attachment id"], 400);
     }

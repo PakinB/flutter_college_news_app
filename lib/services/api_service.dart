@@ -66,10 +66,24 @@ class ApiService {
     required String fileName,
     bool replaceExisting = false,
   }) async {
+    return uploadAnnouncementAttachment(
+      announcementId: announcementId,
+      bytes: bytes,
+      fileName: fileName,
+      replaceExistingImages: replaceExisting,
+    );
+  }
+
+  Future<int> uploadAnnouncementAttachment({
+    required int announcementId,
+    required Uint8List bytes,
+    required String fileName,
+    bool replaceExistingImages = false,
+  }) async {
     final Uri url = Uri.parse('$apiBaseUrl/attachments/index.php');
     final http.MultipartRequest request = http.MultipartRequest('POST', url)
       ..fields['announcement_id'] = '$announcementId'
-      ..fields['replace_existing'] = replaceExisting ? '1' : '0'
+      ..fields['replace_existing'] = replaceExistingImages ? '1' : '0'
       ..files.add(
         http.MultipartFile.fromBytes('file', bytes, filename: fileName),
       );
@@ -80,16 +94,48 @@ class ApiService {
     );
 
     if (response.statusCode < 200 || response.statusCode >= 300) {
-      throw Exception('Image upload failed: ${response.statusCode}');
+      throw Exception(
+        'Attachment upload failed: ${response.statusCode} ${response.body}',
+      );
     }
 
     final Map<String, dynamic> body =
         jsonDecode(response.body) as Map<String, dynamic>;
     if (body['status'] != 'success') {
-      throw Exception(body['message'] ?? 'Image upload error');
+      throw Exception(body['message'] ?? 'Attachment upload error');
     }
 
     return int.tryParse('${body['id'] ?? 0}') ?? 0;
+  }
+
+  Future<int> createAnnouncementLinkAttachment({
+    required int announcementId,
+    required String fileUrl,
+  }) async {
+    final Map<String, dynamic> body = await _sendJson(
+      'POST',
+      'attachments/index.php',
+      <String, dynamic>{
+        'announcement_id': announcementId,
+        'file_url': fileUrl,
+        'file_type': 'link/url',
+      },
+    );
+    return int.tryParse('${body['id'] ?? 0}') ?? 0;
+  }
+
+  Future<void> deleteAnnouncementImages(int announcementId) async {
+    await _request(
+      'DELETE',
+      'attachments/index.php?announcement_id=$announcementId&type=image',
+    );
+  }
+
+  Future<void> deleteAnnouncementFiles(int announcementId) async {
+    await _request(
+      'DELETE',
+      'attachments/index.php?announcement_id=$announcementId&type=file',
+    );
   }
 
   Future<void> deleteAnnouncement(int id) async {
