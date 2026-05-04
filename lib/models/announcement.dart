@@ -37,8 +37,10 @@ class Announcement {
   bool get isPending => status == 'pending' || status == 'waiting';
   bool get isDraft => status == 'draft';
   bool get isUrgent => priority == 'urgent' || priority == 'high';
-  bool get isEmployeeTarget => targetType == 'employee' || targetType == 'staff';
-  bool get isFacultyTarget => targetType == 'faculty' && targetFacultyId != null;
+  bool get isEmployeeTarget =>
+      targetType == 'employee' || targetType == 'staff';
+  bool get isFacultyTarget =>
+      targetType == 'faculty' && targetFacultyId != null;
   bool get isAllFaculty =>
       targetType == 'all' || (!isEmployeeTarget && targetFacultyId == null);
   String? get imageUrl {
@@ -46,6 +48,35 @@ class Announcement {
       if (attachment.isImage) return attachment.fileUrl;
     }
     return null;
+  }
+
+  List<String> get imageUrls {
+    return attachments
+        .where((AnnouncementAttachment attachment) => attachment.isImage)
+        .map((AnnouncementAttachment attachment) => attachment.fileUrl)
+        .where((String fileUrl) => fileUrl.isNotEmpty && fileUrl != '-')
+        .toList();
+  }
+
+  List<AnnouncementAttachment> get fileAttachments {
+    return attachments
+        .where((AnnouncementAttachment attachment) => !attachment.isImage)
+        .toList();
+  }
+
+  List<AnnouncementAttachment> get linkAttachments {
+    return attachments
+        .where((AnnouncementAttachment attachment) => attachment.isLink)
+        .toList();
+  }
+
+  List<AnnouncementAttachment> get downloadFileAttachments {
+    return attachments
+        .where(
+          (AnnouncementAttachment attachment) =>
+              !attachment.isImage && !attachment.isLink,
+        )
+        .toList();
   }
 
   bool get hasImage => imageUrl != null;
@@ -77,10 +108,14 @@ class Announcement {
     if (isEmployeeTarget) return 'พนักงาน';
     return isAllFaculty ? 'ทุกคน' : targetFacultyName;
   }
+
   Color? get accent => isUrgent ? const Color(0xFF5B57D8) : null;
 
   factory Announcement.fromJson(Map<String, dynamic> json) {
-    final String targetType = _text(json['target_type'], fallback: 'all').toLowerCase();
+    final String targetType = _text(
+      json['target_type'],
+      fallback: 'all',
+    ).toLowerCase();
     final int? targetFacultyId = int.tryParse(
       '${json['target_faculty_id'] ?? ''}',
     );
@@ -99,8 +134,8 @@ class Announcement {
         fallback: targetType == 'employee'
             ? 'พนักงาน'
             : targetType == 'all'
-                ? 'ทุกคน'
-                : '-',
+            ? 'ทุกคน'
+            : '-',
       ),
       createdAt: _text(json['created_at']),
       updatedAt: _text(json['updated_at'] ?? json['created_at']),
@@ -180,6 +215,16 @@ class AnnouncementAttachment {
   final String uploadedAt;
 
   bool get isImage => fileType.toLowerCase().startsWith('image/');
+  bool get isLink => fileType.toLowerCase() == 'link/url';
+
+  String get fileName {
+    final Uri? uri = Uri.tryParse(fileUrl);
+    final String path = uri?.path.isNotEmpty == true ? uri!.path : fileUrl;
+    final String name =
+        path.split('/').where((String part) => part.isNotEmpty).lastOrNull ??
+        fileUrl;
+    return Uri.decodeComponent(name);
+  }
 
   factory AnnouncementAttachment.fromJson(Map<String, dynamic> json) {
     return AnnouncementAttachment(

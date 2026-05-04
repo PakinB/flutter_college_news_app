@@ -96,18 +96,21 @@ class _DashboardPageState extends State<DashboardPage> {
     );
     if (result == null) return;
 
-    final int announcementId = await _api.createAnnouncement(
-      result.announcement.toPayload(createdBy: currentUser.id),
-    );
-    if (result.imageFile != null) {
-      await _api.uploadAnnouncementImage(
-        announcementId: announcementId,
-        bytes: await result.imageFile!.readAsBytes(),
-        fileName: result.imageFile!.name,
-        replaceExisting: true,
+    try {
+      final int announcementId = await _api.createAnnouncement(
+        result.announcement.toPayload(createdBy: currentUser.id),
       );
+      await _syncAnnouncementAttachments(
+        announcementId: announcementId,
+        images: result.imageAttachments,
+        files: result.fileAttachments,
+        clearExistingImages: result.clearExistingImages,
+        clearExistingFiles: result.clearExistingFiles,
+      );
+      await _loadData();
+    } catch (error) {
+      _showActionError(error);
     }
-    await _loadData();
   }
 
   Future<void> _editNews(Announcement announcement) async {
@@ -119,19 +122,73 @@ class _DashboardPageState extends State<DashboardPage> {
     );
     if (result == null) return;
 
-    await _api.updateAnnouncement(
-      announcement.id,
-      result.announcement.toPayload(createdBy: currentUser.id),
-    );
-    if (result.imageFile != null) {
-      await _api.uploadAnnouncementImage(
+    try {
+      await _api.updateAnnouncement(
+        announcement.id,
+        result.announcement.toPayload(createdBy: currentUser.id),
+      );
+      await _syncAnnouncementAttachments(
         announcementId: announcement.id,
-        bytes: await result.imageFile!.readAsBytes(),
-        fileName: result.imageFile!.name,
-        replaceExisting: true,
+        images: result.imageAttachments,
+        files: result.fileAttachments,
+        clearExistingImages: result.clearExistingImages,
+        clearExistingFiles: result.clearExistingFiles,
+      );
+      await _loadData();
+    } catch (error) {
+      _showActionError(error);
+    }
+  }
+
+  Future<void> _syncAnnouncementAttachments({
+    required int announcementId,
+    required List<PickedAnnouncementAttachment> images,
+    required List<PickedAnnouncementAttachment> files,
+    required bool clearExistingImages,
+    required bool clearExistingFiles,
+  }) async {
+    if (images.isEmpty && files.isEmpty) {
+      if (clearExistingImages) {
+        await _api.deleteAnnouncementImages(announcementId);
+      }
+      if (clearExistingFiles) {
+        await _api.deleteAnnouncementFiles(announcementId);
+      }
+      return;
+    }
+
+    if (clearExistingImages && images.isEmpty) {
+      await _api.deleteAnnouncementImages(announcementId);
+    }
+
+    if (clearExistingFiles) {
+      await _api.deleteAnnouncementFiles(announcementId);
+    }
+
+    for (int index = 0; index < images.length; index += 1) {
+      final PickedAnnouncementAttachment image = images[index];
+      await _api.uploadAnnouncementAttachment(
+        announcementId: announcementId,
+        bytes: await image.readAsBytes(),
+        fileName: image.fileName,
+        replaceExistingImages: clearExistingImages && index == 0,
       );
     }
-    await _loadData();
+
+    for (final PickedAnnouncementAttachment file in files) {
+      if (file.isUrl) {
+        await _api.createAnnouncementLinkAttachment(
+          announcementId: announcementId,
+          fileUrl: file.fileName,
+        );
+      } else {
+        await _api.uploadAnnouncementAttachment(
+          announcementId: announcementId,
+          bytes: await file.readAsBytes(),
+          fileName: file.fileName,
+        );
+      }
+    }
   }
 
   Future<void> _approveNews(Announcement announcement) async {
@@ -142,6 +199,13 @@ class _DashboardPageState extends State<DashboardPage> {
           .toPayload(createdBy: currentUser.id),
     );
     await _loadData();
+  }
+
+  void _showActionError(Object error) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(error.toString())));
   }
 
   Future<void> _deleteNews(Announcement announcement) async {
@@ -196,7 +260,8 @@ class _DashboardPageState extends State<DashboardPage> {
     }
     return _announcements.where((Announcement item) {
       return item.isAllFaculty ||
-          (item.isFacultyTarget && item.targetFacultyId == currentUser.facultyId);
+          (item.isFacultyTarget &&
+              item.targetFacultyId == currentUser.facultyId);
     }).toList();
   }
 
@@ -300,7 +365,8 @@ class _DashboardPageState extends State<DashboardPage> {
     }
 
     return <AppMenuItem>[
-      if (!currentUser.isRecipientOnly) item(Icons.dashboard_rounded, 'แดชบอร์ด'),
+      if (!currentUser.isRecipientOnly)
+        item(Icons.dashboard_rounded, 'แดชบอร์ด'),
       item(
         Icons.article_outlined,
         'ข่าวทั้งหมด',
