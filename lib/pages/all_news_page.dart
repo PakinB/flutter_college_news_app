@@ -39,7 +39,10 @@ class AllNewsPage extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: <Widget>[
-            Text(title, style: const TextStyle(fontSize: 24, fontWeight: FontWeight.w800)),
+            Text(
+              title,
+              style: const TextStyle(fontSize: 24, fontWeight: FontWeight.w800),
+            ),
             const SizedBox(height: 12),
             NewsListBody(
               announcements: announcements,
@@ -82,11 +85,15 @@ class NewsListBody extends StatelessWidget {
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
       itemCount: announcements.length,
-      separatorBuilder: (BuildContext context, int index) => const SizedBox(height: 12),
+      separatorBuilder: (BuildContext context, int index) =>
+          const SizedBox(height: 12),
       itemBuilder: (BuildContext context, int index) {
         final Announcement item = announcements[index];
-        final bool ownsFaculty = currentUser.facultyId != null && item.targetFacultyId == currentUser.facultyId;
-        final bool canEdit = currentUser.isAdmin || currentUser.isPr || (currentUser.isTeacher && ownsFaculty);
+        final bool ownsFaculty = item.targetsFaculty(currentUser.facultyId);
+        final bool canEdit =
+            currentUser.isAdmin ||
+            currentUser.isPr ||
+            (currentUser.isTeacher && ownsFaculty && !item.isTeacherTarget);
         return AnnouncementCard(
           announcement: item,
           canEdit: canEdit,
@@ -94,10 +101,8 @@ class NewsListBody extends StatelessWidget {
           onEdit: () => onEdit(item),
           onApprove: () => onApprove(item),
           onDelete: () => onDelete(item),
-          onView: () => showAnnouncementDetails(
-            context: context,
-            announcement: item,
-          ),
+          onView: () =>
+              showAnnouncementDetails(context: context, announcement: item),
         );
       },
     );

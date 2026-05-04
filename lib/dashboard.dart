@@ -258,10 +258,18 @@ class _DashboardPageState extends State<DashboardPage> {
         return item.isAllFaculty || item.isEmployeeTarget;
       }).toList();
     }
+    if (currentUser.isTeacher) {
+      return _announcements.where((Announcement item) {
+        return item.isAllFaculty ||
+            (item.isFacultyTarget &&
+                item.targetsFaculty(currentUser.facultyId));
+      }).toList();
+    }
     return _announcements.where((Announcement item) {
       return item.isAllFaculty ||
-          (item.isFacultyTarget &&
-              item.targetFacultyId == currentUser.facultyId);
+          (!item.isTeacherTarget &&
+              item.isFacultyTarget &&
+              item.targetsFaculty(currentUser.facultyId));
     }).toList();
   }
 

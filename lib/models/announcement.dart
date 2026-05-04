@@ -11,6 +11,8 @@ class Announcement {
     required this.priority,
     required this.targetType,
     this.targetFacultyId,
+    this.targetFacultyIds = const <int>[],
+    this.targetFacultyNames = const <String>[],
     required this.targetFacultyName,
     required this.createdAt,
     required this.updatedAt,
@@ -27,6 +29,8 @@ class Announcement {
   final String priority;
   final String targetType;
   final int? targetFacultyId;
+  final List<int> targetFacultyIds;
+  final List<String> targetFacultyNames;
   final String targetFacultyName;
   final String createdAt;
   final String updatedAt;
@@ -39,10 +43,24 @@ class Announcement {
   bool get isUrgent => priority == 'urgent' || priority == 'high';
   bool get isEmployeeTarget =>
       targetType == 'employee' || targetType == 'staff';
+  bool get isTeacherTarget => targetType == 'teacher';
   bool get isFacultyTarget =>
-      targetType == 'faculty' && targetFacultyId != null;
+      (targetType == 'faculty' || isTeacherTarget) &&
+      effectiveTargetFacultyIds.isNotEmpty;
   bool get isAllFaculty =>
-      targetType == 'all' || (!isEmployeeTarget && targetFacultyId == null);
+      targetType == 'all' ||
+      (!isEmployeeTarget &&
+          !isTeacherTarget &&
+          effectiveTargetFacultyIds.isEmpty);
+  List<int> get effectiveTargetFacultyIds {
+    if (targetFacultyIds.isNotEmpty) return targetFacultyIds;
+    return targetFacultyId == null ? const <int>[] : <int>[targetFacultyId!];
+  }
+
+  bool targetsFaculty(int? facultyId) {
+    return facultyId != null && effectiveTargetFacultyIds.contains(facultyId);
+  }
+
   String? get imageUrl {
     for (final AnnouncementAttachment attachment in attachments) {
       if (attachment.isImage) return attachment.fileUrl;
@@ -106,7 +124,15 @@ class Announcement {
   String get priorityLabel => isUrgent ? 'ด่วน' : 'ปกติ';
   String get targetLabel {
     if (isEmployeeTarget) return 'พนักงาน';
-    return isAllFaculty ? 'ทุกคน' : targetFacultyName;
+    if (isTeacherTarget) {
+      final String facultyLabel = targetFacultyNames.isNotEmpty
+          ? targetFacultyNames.join(', ')
+          : targetFacultyName;
+      return 'อาจารย์: $facultyLabel';
+    }
+    if (isAllFaculty) return 'ทุกคน';
+    if (targetFacultyNames.isNotEmpty) return targetFacultyNames.join(', ');
+    return targetFacultyName;
   }
 
   Color? get accent => isUrgent ? const Color(0xFF5B57D8) : null;
@@ -119,6 +145,15 @@ class Announcement {
     final int? targetFacultyId = int.tryParse(
       '${json['target_faculty_id'] ?? ''}',
     );
+    final List<int> targetFacultyIds = _intList(
+      json['target_faculty_ids'],
+      fallback: targetFacultyId == null
+          ? const <int>[]
+          : <int>[targetFacultyId],
+    );
+    final List<String> targetFacultyNames = _stringList(
+      json['target_faculty_names'],
+    );
     return Announcement(
       id: int.tryParse('${json['id'] ?? 0}') ?? 0,
       title: _text(json['title']),
@@ -129,10 +164,14 @@ class Announcement {
       priority: _text(json['priority'], fallback: 'normal').toLowerCase(),
       targetType: targetType,
       targetFacultyId: targetFacultyId,
+      targetFacultyIds: targetFacultyIds,
+      targetFacultyNames: targetFacultyNames,
       targetFacultyName: _text(
         json['target_faculty_name'] ?? json['faculty'],
         fallback: targetType == 'employee'
             ? 'พนักงาน'
+            : targetType == 'teacher'
+            ? 'อาจารย์'
             : targetType == 'all'
             ? 'ทุกคน'
             : '-',
@@ -157,6 +196,7 @@ class Announcement {
       'priority': priority,
       'target_type': targetType,
       'target_faculty_id': targetFacultyId,
+      'target_faculty_ids': effectiveTargetFacultyIds,
       'expired_at': expiredAt == '-' ? null : expiredAt,
       'published_at': status == 'published'
           ? DateTime.now().toIso8601String()
@@ -174,6 +214,8 @@ class Announcement {
     String? priority,
     String? targetType,
     int? targetFacultyId,
+    List<int>? targetFacultyIds,
+    List<String>? targetFacultyNames,
     String? targetFacultyName,
     String? createdAt,
     String? updatedAt,
@@ -190,6 +232,8 @@ class Announcement {
       priority: priority ?? this.priority,
       targetType: targetType ?? this.targetType,
       targetFacultyId: targetFacultyId ?? this.targetFacultyId,
+      targetFacultyIds: targetFacultyIds ?? this.targetFacultyIds,
+      targetFacultyNames: targetFacultyNames ?? this.targetFacultyNames,
       targetFacultyName: targetFacultyName ?? this.targetFacultyName,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
@@ -242,4 +286,38 @@ String _text(dynamic value, {String fallback = '-'}) {
   final String text = '$value'.trim();
   if (text.isEmpty || text.toLowerCase() == 'null') return fallback;
   return text;
+}
+
+List<int> _intList(dynamic value, {List<int> fallback = const <int>[]}) {
+  if (value is List) {
+    return value
+        .map((dynamic item) => int.tryParse('$item'))
+        .whereType<int>()
+        .toList();
+  }
+  if (value is String && value.trim().isNotEmpty) {
+    return value
+        .split(',')
+        .map((String item) => int.tryParse(item.trim()))
+        .whereType<int>()
+        .toList();
+  }
+  return fallback;
+}
+
+List<String> _stringList(dynamic value) {
+  if (value is List) {
+    return value
+        .map((dynamic item) => '$item'.trim())
+        .where((String item) => item.isNotEmpty && item.toLowerCase() != 'null')
+        .toList();
+  }
+  if (value is String && value.trim().isNotEmpty) {
+    return value
+        .split(',')
+        .map((String item) => item.trim())
+        .where((String item) => item.isNotEmpty && item.toLowerCase() != 'null')
+        .toList();
+  }
+  return const <String>[];
 }
