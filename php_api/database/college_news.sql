@@ -3,9 +3,9 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: May 04, 2026 at 01:27 PM
+-- Generation Time: May 04, 2026 at 04:29 PM
 -- Server version: 10.4.32-MariaDB
--- PHP Version: 8.0.30
+-- PHP Version: 8.2.12
 
 SET SQL_MODE = "NO_AUTO_VALUE_ON_ZERO";
 START TRANSACTION;
@@ -48,15 +48,12 @@ CREATE TABLE `announcements` (
 --
 
 INSERT INTO `announcements` (`id`, `title`, `content`, `summary`, `created_by`, `status`, `priority`, `target_type`, `target_faculty_id`, `created_at`, `updated_at`, `published_at`, `expired_at`) VALUES
-(1, 'ปิดระบบชั่วคราว', 'ระบบจะปิดคืนนี้', 'แจ้งเตือนระบบ', 2, 'published', 'urgent', 'faculty', 2, '2026-04-29 14:52:52', '2026-04-29 20:04:18', '2026-04-29 20:04:18', NULL),
-(3, 'LAW', 'LAW', 'LAW', 12, 'published', 'normal', 'faculty', 2, '2026-04-29 20:09:59', '2026-04-29 20:10:43', '2026-04-29 20:10:43', NULL),
-(4, 'ALL', 'ALL', 'ALL', 8, 'published', 'normal', 'all', NULL, '2026-04-29 20:13:15', '2026-04-29 20:13:15', '2026-04-29 20:13:15', NULL),
-(6, 'รออนุมัติ', 'รออนุมัติ', 'รออนุมัติ', 8, 'published', 'normal', 'all', NULL, '2026-04-29 21:46:43', '2026-04-29 21:46:57', '2026-04-29 21:46:57', NULL),
-(7, 'testnew', 'testnew', 'testnew', 12, 'pending', 'normal', 'all', NULL, '2026-04-29 22:37:33', '2026-04-29 22:39:55', NULL, '2026-04-28 22:39:00'),
-(8, 'test22', '2', '2', 11, 'published', 'normal', 'faculty', 1, '2026-04-29 22:46:44', '2026-04-29 22:47:26', '2026-04-29 22:47:26', NULL),
-(9, 'nk', 'nk', 'nk', 8, 'published', 'normal', 'employee', NULL, '2026-04-30 00:06:10', '2026-04-30 00:06:27', '2026-04-30 00:06:26', NULL),
-(10, 'testไฟล์+รูป', 'testไฟล์+รูป', 'testไฟล์+รูป', 8, 'published', 'normal', 'all', NULL, '2026-05-04 17:22:21', '2026-05-04 17:33:25', '2026-05-04 17:33:25', NULL),
-(11, 'd', 'd', 'd', 8, 'published', 'normal', 'all', NULL, '2026-05-04 17:51:26', '2026-05-04 18:21:19', '2026-05-04 18:21:19', NULL);
+(1, 'ปิดระบบชั่วคราว', 'ระบบจะปิดคืนนี้', 'แจ้งเตือนระบบ', 2, 'published', 'urgent', 'all', NULL, '2026-04-29 14:52:52', '2026-05-04 21:08:27', '2026-05-04 21:08:27', NULL),
+(12, 'โครงการ \"การใช้เทคโนโลยี Generate AI\"', 'ณ ห้องประชุมรอดบางยาง ชั้น 3 ภ 2', '', 8, 'published', 'normal', 'faculty', 1, '2026-05-04 21:11:01', '2026-05-04 21:11:04', '2026-05-04 21:11:04', '2026-05-10 18:25:00'),
+(13, 'ฟุตซอล กระชับมิตร คณะนิติศาสตร์', 'ฟุตซอลกระชับมิตร ระหว่าง รุ่นพี่(ศิษย์เก่า)พบกับ รุ่นน้อง\nในวันที่ 4 เมษายน 2568 เวลา 17:00 น. - 18:00น', '', 8, 'published', 'normal', 'faculty', 2, '2026-05-04 21:14:13', '2026-05-04 21:14:13', '2026-05-04 21:14:13', '2026-05-13 19:14:00'),
+(14, 'Workshop วาดภาพระบายสีบนผ้า คณะนิเทศศาสตร์', 'บางแสนสุโข สุขี ณ ท่าช้าง workshop วาดภาพระบายสีบนผ้า ของคณะนิเทศศาสตร์\nวันเสาร์ที่ 7 มีนาคม 2569 เวลา 15:00 น ที่ ร้านท่าช้างบางแสน', '', 8, 'published', 'normal', 'faculty', 7, '2026-05-04 21:19:49', '2026-05-04 21:19:49', '2026-05-04 21:19:49', '2026-05-19 18:19:00'),
+(15, 'โครงการมนต์เสน่ห์แห่งสงกรานต์ สุขชื่นบานศรีปทุม', 'ม่วนคัก มันส์จัด สาดความสุขต้อนรับสงกรานต์\nโครงการมนต์เสน่ห์แห่งสงกรานต์ สุขชื่นบานศรีปทุม\nในวันที่ 4 เมษายน 2568 เริ่ม 08:30น เป็นต้น ณ มหาวิทยาลัยศรีปทุม ชลบุรี', '', 8, 'published', 'normal', 'all', NULL, '2026-05-04 21:22:32', '2026-05-04 21:22:32', '2026-05-04 21:22:32', '2026-06-08 17:22:00'),
+(16, 'พิธีประสาทปริญญา', 'พิธีประสาทปริญญา มหาวิทยาลัยศรีปทุม ชลบุรี ประจำปีการศึกษา 2567 \n1-31 ตุลาคม 2568\nจอง/วัดตัว/รับชุดครุย\nร้านค้าภายในมหาวิทยาลัย\n1-31 ตุลาคม 2568\nรายงารตัวผ่านเว็ปไซต์\nwww.chonburi.spu.ac.th', '', 8, 'published', 'urgent', 'all', NULL, '2026-05-04 21:26:23', '2026-05-04 21:26:23', '2026-05-04 21:26:23', '2026-05-20 17:25:00');
 
 -- --------------------------------------------------------
 
@@ -78,14 +75,11 @@ CREATE TABLE `attachments` (
 
 INSERT INTO `attachments` (`id`, `announcement_id`, `file_url`, `file_type`, `uploaded_at`) VALUES
 (1, 1, 'file:///C:/Users/budph/Downloads/git%20team.pdf', 'pdf', '2026-04-29 14:56:47'),
-(2, 9, 'http://localhost/flutter_college_news_app/php_api/images/announcement_9_8c7630156b63d628.png', 'image/png', '2026-04-30 00:06:10'),
-(3, 10, 'http://localhost/flutter_college_news_app/php_api/images/announcement_10_7440c7b1131540c6.png', 'image/png', '2026-05-04 17:22:21'),
-(4, 10, 'http://localhost/flutter_college_news_app/php_api/images/announcement_10_ba2dfc85dc8d8054.png', 'image/png', '2026-05-04 17:22:21'),
-(5, 11, 'http://localhost/flutter_college_news_app/php_api/images/announcement_11_ad544ee621493f66.png', 'image/png', '2026-05-04 17:51:26'),
-(6, 11, 'http://localhost/flutter_college_news_app/php_api/images/announcement_11_2c07587da8bc28b9.png', 'image/png', '2026-05-04 17:51:26'),
-(7, 11, 'http://localhost/flutter_college_news_app/php_api/images/announcement_11_bb16c0d9e2a8a133.png', 'image/png', '2026-05-04 17:51:26'),
-(8, 11, 'http://localhost/flutter_college_news_app/php_api/images/announcement_11_19de2844fb50b7b4.pdf', 'application/pdf', '2026-05-04 17:52:28'),
-(9, 11, 'https://www.google.co.th/index.html', 'link/url', '2026-05-04 18:21:19');
+(10, 12, 'http://localhost/flutter_college_news_app/php_api/images/announcement_12_5a5ea977267c5648.jpg', 'image/jpeg', '2026-05-04 21:11:01'),
+(11, 13, 'http://localhost/flutter_college_news_app/php_api/images/announcement_13_b89a0e849a8fe082.png', 'image/png', '2026-05-04 21:14:14'),
+(12, 14, 'http://localhost/flutter_college_news_app/php_api/images/announcement_14_efc79f8b6e193616.png', 'image/png', '2026-05-04 21:19:49'),
+(13, 15, 'http://localhost/flutter_college_news_app/php_api/images/announcement_15_e4efe30e97faea80.png', 'image/png', '2026-05-04 21:22:32'),
+(14, 16, 'http://localhost/flutter_college_news_app/php_api/images/announcement_16_8ab73a83fdf248ad.png', 'image/png', '2026-05-04 21:26:23');
 
 -- --------------------------------------------------------
 
@@ -163,12 +157,14 @@ INSERT INTO `users` (`id`, `name`, `email`, `password`, `role`, `faculty_id`, `c
 (2, 'test', 'test@gmail.com', '1234567', 'admin', 4, '2026-04-28 18:16:18', '2026-04-28 18:17:38'),
 (4, 'test3', 'test3@gmail.com', '$2y$10$cAWeandVHoeoQcp1C8JF6ehtHwxTg7O4t8wFX1BGGYxmG19Ho71ra', NULL, NULL, '2026-04-28 20:21:36', '2026-04-28 20:21:36'),
 (7, 'test4', 'test4@gmail.com', '$2y$10$MIxP4H0QSZ5dArZArKMk7Ob7N744uwPmB.3oqLm4YUxZ5YxVNEEfm', 'user', 3, '2026-04-29 12:51:41', '2026-04-29 12:51:41'),
-(8, 'test5', 'test5@gmail.com', '$2y$10$q7ZWjnJy7KGAjbVB5ec/Iuk0PZXXeZPJyrxocphh5e2PA1pu42Bo6', 'admin', 1, '2026-04-29 17:14:10', '2026-04-29 17:14:34'),
-(9, 'it@gmail.com', 'it@gmail.com', '$2y$10$wZLEsKuS4CKpS5kYDasnPOSK7AoHeCS0bCseyfMXWF0uIeQJ5F102', 'student', 1, '2026-04-29 19:32:47', '2026-04-29 19:32:47'),
+(8, 'Admin', 'admin@gmail.com', '$2y$10$q7ZWjnJy7KGAjbVB5ec/Iuk0PZXXeZPJyrxocphh5e2PA1pu42Bo6', 'admin', 1, '2026-04-29 17:14:10', '2026-05-04 21:11:33'),
+(9, 'it', 'it@gmail.com', '$2y$10$wZLEsKuS4CKpS5kYDasnPOSK7AoHeCS0bCseyfMXWF0uIeQJ5F102', 'student', 1, '2026-04-29 19:32:47', '2026-05-04 21:29:20'),
 (10, 'law', 'law@gmail.com', '$2y$10$nG65LhAxT9Jn4LPSyCYC8uWgsdCHGgiD.6Mgc7sYLwKV.xxnM.yTG', 'student', 2, '2026-04-29 20:04:56', '2026-04-29 20:04:56'),
 (11, 'tc', 'tc@gmail.com', '$2y$10$ZnkMbLkZiIxF3p2fByv.oOX6RV79YpAF9RNXvNyIdHw/BlKDNM3Te', 'teacher', 1, '2026-04-29 20:06:09', '2026-04-29 20:06:53'),
 (12, 'pr', 'pr@gmail.com', '$2y$10$S.JaDokFSq5ysIimVg.9.uI2Skay1S2mBjWv2LDqNvJ8oAK9SFLUq', 'pr', 1, '2026-04-29 20:08:44', '2026-04-29 20:08:59'),
-(13, 'bk', 'bk@gmail.com', '$2y$10$mULVbkX5TjRXno1LsUUmke7N9zU65lHMgxJLf/F1.ltK9zTgW/dV2', 'employee', NULL, '2026-04-30 00:04:43', '2026-04-30 00:04:43');
+(13, 'em', 'em@gmail.com', '$2y$10$mULVbkX5TjRXno1LsUUmke7N9zU65lHMgxJLf/F1.ltK9zTgW/dV2', 'employee', NULL, '2026-04-30 00:04:43', '2026-05-04 21:29:13'),
+(14, 'CA', 'ca@gmail.com', '$2y$10$3fZywzBCwyuhGz/PCemAfOaxROEX2vo3JV2UkltkNltmDEYnEUsaO', 'student', 7, '2026-05-04 21:27:17', '2026-05-04 21:27:17'),
+(15, 'admin1', 'admin1@gmail.com', '$2y$10$kk2kT0zaGHcsJi8b/xgmXeoyqZSExS3tAMYv8.H.lf9cRoRAMWzMq', 'admin', 1, '2026-05-04 21:27:42', '2026-05-04 21:28:51');
 
 --
 -- Indexes for dumped tables
@@ -219,13 +215,13 @@ ALTER TABLE `users`
 -- AUTO_INCREMENT for table `announcements`
 --
 ALTER TABLE `announcements`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=12;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=17;
 
 --
 -- AUTO_INCREMENT for table `attachments`
 --
 ALTER TABLE `attachments`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=10;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=15;
 
 --
 -- AUTO_INCREMENT for table `faculties`
@@ -243,7 +239,7 @@ ALTER TABLE `notifications`
 -- AUTO_INCREMENT for table `users`
 --
 ALTER TABLE `users`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=14;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=16;
 
 --
 -- Constraints for dumped tables
