@@ -201,133 +201,125 @@ class AnnouncementCard extends StatelessWidget {
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: <Widget>[
-                Container(
-                  width: 6,
-                  decoration: BoxDecoration(
-                    color: announcement.accent ?? Colors.transparent,
-                    borderRadius: const BorderRadius.only(
-                      topLeft: Radius.circular(8),
-                      bottomLeft: Radius.circular(8),
-                    ),
+              Container(
+                width: 6,
+                decoration: BoxDecoration(
+                  color: announcement.accent ?? Colors.transparent,
+                  borderRadius: const BorderRadius.only(
+                    topLeft: Radius.circular(8),
+                    bottomLeft: Radius.circular(8),
                   ),
                 ),
-                Expanded(
-                  child: Padding(
-                    padding: const EdgeInsets.all(16),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: <Widget>[
-                        Wrap(
-                          spacing: 8,
-                          runSpacing: 8,
-                          children: <Widget>[
-                            _TagPill(
-                              label: announcement.priorityLabel,
-                              color: announcement.isUrgent
-                                  ? const Color(0xFFF6C5C3)
-                                  : const Color(0xFFE3DED4),
-                            ),
-                            _TagPill(
-                              label: announcement.statusLabel,
-                              color: announcement.isPending
-                                  ? const Color(0xFFF7D4A7)
-                                  : const Color(0xFFCDE8B3),
-                            ),
-                            _TagPill(
-                              label: announcement.targetLabel,
-                              color: const Color(0xFFBBD5F2),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 10),
-                        Text(
-                          announcement.title,
-                          style: const TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.w800,
-                            height: 1.35,
+              ),
+              Expanded(
+                child: Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: <Widget>[
+                      Wrap(
+                        spacing: 8,
+                        runSpacing: 8,
+                        children: <Widget>[
+                          _TagPill(
+                            label: announcement.priorityLabel,
+                            color: announcement.isUrgent
+                                ? const Color(0xFFF6C5C3)
+                                : const Color(0xFFE3DED4),
                           ),
-                        ),
-                        if (announcement.imageUrls.isNotEmpty) ...<Widget>[
-                          const SizedBox(height: 12),
-                          _AnnouncementImage(
-                            imageUrl: announcement.imageUrls.first,
-                            maxHeight: 260,
+                          _TagPill(
+                            label: announcement.statusLabel,
+                            color: announcement.isPending
+                                ? const Color(0xFFF7D4A7)
+                                : const Color(0xFFCDE8B3),
+                          ),
+                          _TagPill(
+                            label: announcement.targetLabel,
+                            color: const Color(0xFFBBD5F2),
                           ),
                         ],
-                        const SizedBox(height: 10),
-                        Text(
-                          announcement.content,
-                          maxLines: 4,
-                          overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(
-                            fontSize: 15,
-                            height: 1.5,
-                            color: Color(0xFF433F36),
-                          ),
+                      ),
+                      const SizedBox(height: 10),
+                      Text(
+                        announcement.title,
+                        style: const TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.w800,
+                          height: 1.35,
                         ),
+                      ),
+                      if (announcement.imageUrls.isNotEmpty) ...<Widget>[
+                        const SizedBox(height: 12),
+                        _AnnouncementImage(
+                          imageUrl: announcement.imageUrls.first,
+                          maxHeight: 260,
+                        ),
+                      ],
+                      const SizedBox(height: 10),
+                      Text(
+                        announcement.content,
+                        maxLines: 4,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          fontSize: 15,
+                          height: 1.5,
+                          color: Color(0xFF433F36),
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      Wrap(
+                        spacing: 14,
+                        runSpacing: 8,
+                        children: <Widget>[
+                          Text(
+                            announcement.author,
+                            style: const TextStyle(fontWeight: FontWeight.w700),
+                          ),
+                          Text('แก้ไขล่าสุด: ${announcement.updatedAt}'),
+                          Text('หมดอายุ: ${announcement.expiredAt}'),
+                          const Text(
+                            'กดเพื่อดูรายละเอียด',
+                            style: TextStyle(
+                              color: Color(0xFF4E49B7),
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                        ],
+                      ),
+                      if (canEdit || canApprove) ...<Widget>[
                         const SizedBox(height: 12),
                         Wrap(
-                          spacing: 14,
-                          runSpacing: 8,
+                          spacing: 10,
+                          runSpacing: 10,
                           children: <Widget>[
-                            Text(
-                              announcement.author,
-                              style: const TextStyle(
-                                fontWeight: FontWeight.w700,
+                            if (canEdit)
+                              OutlinedButton.icon(
+                                onPressed: onEdit,
+                                icon: const Icon(Icons.edit_outlined, size: 18),
+                                label: const Text('แก้ไข'),
                               ),
-                            ),
-                            Text('แก้ไขล่าสุด: ${announcement.updatedAt}'),
-                            Text('หมดอายุ: ${announcement.expiredAt}'),
-                            const Text(
-                              'กดเพื่อดูรายละเอียด',
-                              style: TextStyle(
-                                color: Color(0xFF4E49B7),
-                                fontWeight: FontWeight.w700,
+                            if (canApprove && announcement.isPending)
+                              OutlinedButton.icon(
+                                onPressed: onApprove,
+                                icon: const Icon(Icons.check_rounded, size: 18),
+                                label: const Text('อนุมัติ'),
                               ),
-                            ),
+                            if (canEdit)
+                              OutlinedButton.icon(
+                                onPressed: onDelete,
+                                icon: const Icon(
+                                  Icons.delete_outline_rounded,
+                                  size: 18,
+                                ),
+                                label: const Text('ลบ'),
+                              ),
                           ],
                         ),
-                        if (canEdit || canApprove) ...<Widget>[
-                          const SizedBox(height: 12),
-                          Wrap(
-                            spacing: 10,
-                            runSpacing: 10,
-                            children: <Widget>[
-                              if (canEdit)
-                                OutlinedButton.icon(
-                                  onPressed: onEdit,
-                                  icon: const Icon(
-                                    Icons.edit_outlined,
-                                    size: 18,
-                                  ),
-                                  label: const Text('แก้ไข'),
-                                ),
-                              if (canApprove && announcement.isPending)
-                                OutlinedButton.icon(
-                                  onPressed: onApprove,
-                                  icon: const Icon(
-                                    Icons.check_rounded,
-                                    size: 18,
-                                  ),
-                                  label: const Text('อนุมัติ'),
-                                ),
-                              if (canEdit)
-                                OutlinedButton.icon(
-                                  onPressed: onDelete,
-                                  icon: const Icon(
-                                    Icons.delete_outline_rounded,
-                                    size: 18,
-                                  ),
-                                  label: const Text('ลบ'),
-                                ),
-                            ],
-                          ),
-                        ],
                       ],
-                    ),
+                    ],
                   ),
                 ),
+              ),
             ],
           ),
         ),
@@ -480,6 +472,8 @@ Future<void> showLatestAnnouncementPopup({
                 _TagPill(
                   label: announcement.isEmployeeTarget
                       ? 'ข่าวพนักงาน'
+                      : announcement.isTeacherTarget
+                      ? 'ข่าวอาจารย์'
                       : announcement.isAllFaculty
                       ? 'ข่าวทุกคน'
                       : 'ข่าวคณะ',
@@ -487,12 +481,16 @@ Future<void> showLatestAnnouncementPopup({
                       ? const Color(0xFFCDE8B3)
                       : announcement.isEmployeeTarget
                       ? const Color(0xFFFFDCA8)
+                      : announcement.isTeacherTarget
+                      ? const Color(0xFFD9D1FF)
                       : const Color(0xFFBBD5F2),
                 ),
                 if (!announcement.isAllFaculty &&
                     !announcement.isEmployeeTarget)
                   _TagPill(
-                    label: announcement.targetFacultyName,
+                    label: announcement.isTeacherTarget
+                        ? announcement.targetLabel
+                        : announcement.targetFacultyName,
                     color: const Color(0xFFE3DED4),
                   ),
               ],
@@ -529,6 +527,8 @@ Future<void> showLatestAnnouncementPopup({
                   ? 'ข่าวทุกคน'
                   : announcement.isEmployeeTarget
                   ? 'ข่าวพนักงาน'
+                  : announcement.isTeacherTarget
+                  ? announcement.targetLabel
                   : announcement.targetFacultyName,
             ),
             _DetailLine(label: 'ผู้ประกาศ', value: announcement.author),
@@ -649,13 +649,16 @@ class _AttachmentActionSection extends StatelessWidget {
   Future<void> _openDownloadUrl(BuildContext context, String url) async {
     final Uri? uri = Uri.tryParse(url);
     if (uri == null || !uri.hasScheme) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('ลิงก์ไฟล์ไม่ถูกต้อง')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('ลิงก์ไฟล์ไม่ถูกต้อง')));
       return;
     }
 
-    final bool opened = await launchUrl(uri, mode: LaunchMode.externalApplication);
+    final bool opened = await launchUrl(
+      uri,
+      mode: LaunchMode.externalApplication,
+    );
     if (!opened && context.mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('ไม่สามารถเปิดลิงก์ดาวน์โหลดได้')),
@@ -796,9 +799,7 @@ class _AnnouncementImageCarouselState
   }
 
   void _showImage(int index) {
-    final int targetIndex = index
-        .clamp(0, widget.imageUrls.length - 1)
-        .toInt();
+    final int targetIndex = index.clamp(0, widget.imageUrls.length - 1).toInt();
     _controller.animateToPage(
       targetIndex,
       duration: const Duration(milliseconds: 220),
@@ -1412,14 +1413,12 @@ class _SeparatedAttachmentEditor extends StatelessWidget {
     final List<AnnouncementAttachment> currentFiles = currentAttachments
         .where((AnnouncementAttachment item) => !item.isLink)
         .toList();
-    final List<PickedAnnouncementAttachment> selectedLinks =
-        selectedAttachments
-            .where((PickedAnnouncementAttachment item) => item.isUrl)
-            .toList();
-    final List<PickedAnnouncementAttachment> selectedFiles =
-        selectedAttachments
-            .where((PickedAnnouncementAttachment item) => !item.isUrl)
-            .toList();
+    final List<PickedAnnouncementAttachment> selectedLinks = selectedAttachments
+        .where((PickedAnnouncementAttachment item) => item.isUrl)
+        .toList();
+    final List<PickedAnnouncementAttachment> selectedFiles = selectedAttachments
+        .where((PickedAnnouncementAttachment item) => !item.isUrl)
+        .toList();
     final bool hasAttachments =
         selectedAttachments.isNotEmpty || currentAttachments.isNotEmpty;
 
@@ -1661,29 +1660,49 @@ Future<AnnouncementEditorResult?> showAnnouncementEditor({
     existing?.status ?? (user.isAdmin ? 'published' : 'pending'),
   );
   final bool canSelectPublishedStatus = user.isAdmin || status == 'published';
+  final bool canSelectAudience = user.isAdmin || user.isPr;
+  final bool canSelectFaculties = canSelectAudience || user.isTeacher;
   int? targetFacultyId = existing?.targetFacultyId;
+  List<int> targetFacultyIds = existing == null
+      ? <int>[]
+      : List<int>.from(existing.effectiveTargetFacultyIds);
   String targetType = existing?.targetType ?? 'all';
   String targetValue = targetType == 'employee'
       ? 'employee'
-      : targetType == 'all' || targetFacultyId == null
+      : targetType == 'teacher'
+      ? 'teacher:multiple'
+      : targetType == 'all' ||
+            (targetFacultyId == null && targetFacultyIds.isEmpty)
       ? 'all'
-      : 'faculty:$targetFacultyId';
+      : 'faculty:multiple';
   final Set<String> targetOptions = <String>{
     'all',
     'employee',
+    'teacher:multiple',
     ...facultyOptions.map((Faculty item) => 'faculty:${item.id}'),
   };
 
-  if (!targetOptions.contains(targetValue)) {
+  if (!targetOptions.contains(targetValue) &&
+      targetValue != 'faculty:multiple' &&
+      targetValue != 'teacher:multiple') {
     targetValue = 'all';
     targetType = 'all';
     targetFacultyId = null;
+    targetFacultyIds = <int>[];
   }
 
   if (user.isTeacher) {
     targetType = 'faculty';
-    targetFacultyId = user.facultyId;
-    targetValue = 'faculty:${user.facultyId}';
+    if (targetFacultyIds.isEmpty && user.facultyId != null) {
+      targetFacultyIds = <int>[user.facultyId!];
+    }
+    if (user.facultyId != null && !targetFacultyIds.contains(user.facultyId)) {
+      targetFacultyIds = <int>[user.facultyId!, ...targetFacultyIds];
+    }
+    targetFacultyId = targetFacultyIds.isNotEmpty
+        ? targetFacultyIds.first
+        : user.facultyId;
+    targetValue = 'faculty:multiple';
     status = _editorStatus(existing?.status ?? 'pending');
   }
 
@@ -1693,307 +1712,468 @@ Future<AnnouncementEditorResult?> showAnnouncementEditor({
     barrierColor: Colors.black45,
     builder: (BuildContext context) {
       return StatefulBuilder(
-        builder:
-            (
-              BuildContext context,
-              void Function(void Function()) setDialogState,
-            ) {
-              return DashboardDialog(
-                title: existing == null ? 'สร้างข่าวใหม่' : 'แก้ไขข่าว',
-                body: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+        builder: (BuildContext context, void Function(void Function()) setDialogState) {
+          return DashboardDialog(
+            title: existing == null ? 'สร้างข่าวใหม่' : 'แก้ไขข่าว',
+            body: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: <Widget>[
+                _DialogText(controller: title, label: 'หัวข้อข่าว *'),
+                const SizedBox(height: 14),
+                _DialogText(controller: summary, label: 'สรุปข่าว'),
+                const SizedBox(height: 14),
+                _DialogText(
+                  controller: content,
+                  label: 'เนื้อหา *',
+                  minLines: 5,
+                  maxLines: 7,
+                ),
+                const SizedBox(height: 14),
+                _SelectedImagePreviewV2(
+                  imageFiles: selectedImages,
+                  currentImageUrls: currentImageUrls,
+                  onPick: () async {
+                    final List<XFile> images = await imagePicker
+                        .pickMultiImage();
+                    if (images.isEmpty) return;
+                    setDialogState(() {
+                      selectedImages = <XFile>[...selectedImages, ...images];
+                    });
+                  },
+                  onClear: () => setDialogState(() {
+                    selectedImages = <XFile>[];
+                    currentImageUrls = <String>[];
+                    clearExistingImages = true;
+                  }),
+                ),
+                const SizedBox(height: 14),
+                _SeparatedAttachmentEditor(
+                  selectedAttachments: selectedFiles,
+                  currentAttachments: currentFiles,
+                  controller: attachmentUrl,
+                  onAddLink: () {
+                    final String url = attachmentUrl.text.trim();
+                    final Uri? uri = Uri.tryParse(url);
+                    if (uri == null || !uri.hasScheme) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('กรุณากรอก URL ให้ถูกต้อง'),
+                        ),
+                      );
+                      return;
+                    }
+                    if (_isImageUrl(url)) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text(
+                            'หัวข้อ download file ไม่รองรับไฟล์รูปภาพ กรุณาใช้ช่องรูปภาพข่าวแทน',
+                          ),
+                        ),
+                      );
+                      return;
+                    }
+                    setDialogState(() {
+                      selectedFiles = <PickedAnnouncementAttachment>[
+                        ...selectedFiles,
+                        PickedAnnouncementAttachment.fromUrl(url),
+                      ];
+                      attachmentUrl.clear();
+                    });
+                  },
+                  onPickFiles: () async {
+                    final FilePickerResult? result = await FilePicker.platform
+                        .pickFiles(
+                          allowMultiple: true,
+                          withData: true,
+                          type: FileType.custom,
+                          allowedExtensions: const <String>[
+                            'pdf',
+                            'doc',
+                            'docx',
+                            'xls',
+                            'xlsx',
+                            'ppt',
+                            'pptx',
+                            'txt',
+                            'csv',
+                            'zip',
+                          ],
+                        );
+                    if (result == null || result.files.isEmpty) return;
+
+                    final List<PlatformFile> files = result.files.where((
+                      PlatformFile file,
+                    ) {
+                      return !_isImageUrl(file.name) && file.bytes != null;
+                    }).toList();
+                    if (files.length != result.files.length) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text(
+                            'ไม่สามารถอัปโหลดไฟล์รูปภาพในหัวข้อ download file ได้',
+                          ),
+                        ),
+                      );
+                    }
+                    if (files.isEmpty) return;
+
+                    setDialogState(() {
+                      selectedFiles = <PickedAnnouncementAttachment>[
+                        ...selectedFiles,
+                        ...files.map(
+                          PickedAnnouncementAttachment.fromPlatformFile,
+                        ),
+                      ];
+                    });
+                  },
+                  onClear: () => setDialogState(() {
+                    selectedFiles = <PickedAnnouncementAttachment>[];
+                    currentFiles = <AnnouncementAttachment>[];
+                    clearExistingFiles = true;
+                  }),
+                ),
+                const SizedBox(height: 14),
+                Row(
                   children: <Widget>[
-                    _DialogText(controller: title, label: 'หัวข้อข่าว *'),
-                    const SizedBox(height: 14),
-                    _DialogText(controller: summary, label: 'สรุปข่าว'),
-                    const SizedBox(height: 14),
-                    _DialogText(
-                      controller: content,
-                      label: 'เนื้อหา *',
-                      minLines: 5,
-                      maxLines: 7,
-                    ),
-                    const SizedBox(height: 14),
-                    _SelectedImagePreviewV2(
-                      imageFiles: selectedImages,
-                      currentImageUrls: currentImageUrls,
-                      onPick: () async {
-                        final List<XFile> images = await imagePicker
-                            .pickMultiImage();
-                        if (images.isEmpty) return;
-                        setDialogState(() {
-                          selectedImages = <XFile>[
-                            ...selectedImages,
-                            ...images,
-                          ];
-                        });
-                      },
-                      onClear: () => setDialogState(() {
-                        selectedImages = <XFile>[];
-                        currentImageUrls = <String>[];
-                        clearExistingImages = true;
-                      }),
-                    ),
-                    const SizedBox(height: 14),
-                    _SeparatedAttachmentEditor(
-                      selectedAttachments: selectedFiles,
-                      currentAttachments: currentFiles,
-                      controller: attachmentUrl,
-                      onAddLink: () {
-                        final String url = attachmentUrl.text.trim();
-                        final Uri? uri = Uri.tryParse(url);
-                        if (uri == null || !uri.hasScheme) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text('กรุณากรอก URL ให้ถูกต้อง'),
-                            ),
-                          );
-                          return;
-                        }
-                        if (_isImageUrl(url)) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text(
-                                'หัวข้อ download file ไม่รองรับไฟล์รูปภาพ กรุณาใช้ช่องรูปภาพข่าวแทน',
-                              ),
-                            ),
-                          );
-                          return;
-                        }
-                        setDialogState(() {
-                          selectedFiles = <PickedAnnouncementAttachment>[
-                            ...selectedFiles,
-                            PickedAnnouncementAttachment.fromUrl(url),
-                          ];
-                          attachmentUrl.clear();
-                        });
-                      },
-                      onPickFiles: () async {
-                        final FilePickerResult? result = await FilePicker
-                            .platform
-                            .pickFiles(
-                              allowMultiple: true,
-                              withData: true,
-                              type: FileType.custom,
-                              allowedExtensions: const <String>[
-                                'pdf',
-                                'doc',
-                                'docx',
-                                'xls',
-                                'xlsx',
-                                'ppt',
-                                'pptx',
-                                'txt',
-                                'csv',
-                                'zip',
-                              ],
-                            );
-                        if (result == null || result.files.isEmpty) return;
-
-                        final List<PlatformFile> files = result.files
-                            .where((PlatformFile file) {
-                              return !_isImageUrl(file.name) &&
-                                  file.bytes != null;
-                            })
-                            .toList();
-                        if (files.length != result.files.length) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text(
-                                'ไม่สามารถอัปโหลดไฟล์รูปภาพในหัวข้อ download file ได้',
-                              ),
-                            ),
-                          );
-                        }
-                        if (files.isEmpty) return;
-
-                        setDialogState(() {
-                          selectedFiles = <PickedAnnouncementAttachment>[
-                            ...selectedFiles,
-                            ...files.map(
-                              PickedAnnouncementAttachment.fromPlatformFile,
-                            ),
-                          ];
-                        });
-                      },
-                      onClear: () => setDialogState(() {
-                        selectedFiles = <PickedAnnouncementAttachment>[];
-                        currentFiles = <AnnouncementAttachment>[];
-                        clearExistingFiles = true;
-                      }),
-                    ),
-                    const SizedBox(height: 14),
-                    Row(
-                      children: <Widget>[
-                        Expanded(
-                          child: DropdownButtonFormField<String>(
-                            initialValue: priority,
-                            decoration: const InputDecoration(
-                              labelText: 'ความสำคัญ',
-                            ),
-                            items: const <DropdownMenuItem<String>>[
-                              DropdownMenuItem(
-                                value: 'normal',
-                                child: Text('ปกติ'),
-                              ),
-                              DropdownMenuItem(
-                                value: 'urgent',
-                                child: Text('ด่วน'),
-                              ),
-                            ],
-                            onChanged: (String? value) => setDialogState(
-                              () => priority = value ?? priority,
-                            ),
-                          ),
-                        ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: DropdownButtonFormField<String>(
-                            initialValue: status,
-                            decoration: const InputDecoration(
-                              labelText: 'สถานะ',
-                            ),
-                            items: <DropdownMenuItem<String>>[
-                              if (canSelectPublishedStatus)
-                                const DropdownMenuItem(
-                                  value: 'published',
-                                  child: Text('เผยแพร่แล้ว'),
-                                ),
-                              const DropdownMenuItem(
-                                value: 'pending',
-                                child: Text('รออนุมัติ'),
-                              ),
-                              const DropdownMenuItem(
-                                value: 'draft',
-                                child: Text('ฉบับร่าง'),
-                              ),
-                            ],
-                            onChanged: (String? value) =>
-                                setDialogState(() => status = value ?? status),
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 14),
-                    if (user.isPr || user.isAdmin)
-                      DropdownButtonFormField<String>(
-                        initialValue: targetValue,
+                    Expanded(
+                      child: DropdownButtonFormField<String>(
+                        initialValue: priority,
                         decoration: const InputDecoration(
-                          labelText: 'หมวดหมู่ข่าว',
+                          labelText: 'ความสำคัญ',
                         ),
-                        items: <DropdownMenuItem<String>>[
-                          const DropdownMenuItem<String>(
-                            value: 'all',
-                            child: Text('ทุกคน'),
+                        items: const <DropdownMenuItem<String>>[
+                          DropdownMenuItem(
+                            value: 'normal',
+                            child: Text('ปกติ'),
                           ),
-                          const DropdownMenuItem<String>(
-                            value: 'employee',
-                            child: Text('พนักงาน'),
-                          ),
-                          ...facultyOptions.map(
-                            (Faculty item) => DropdownMenuItem<String>(
-                              value: 'faculty:${item.id}',
-                              child: Text(item.name),
-                            ),
+                          DropdownMenuItem(
+                            value: 'urgent',
+                            child: Text('ด่วน'),
                           ),
                         ],
-                        onChanged: (String? value) {
-                          setDialogState(() {
-                            targetValue = value ?? 'all';
-                            targetType = targetValue == 'all'
-                                ? 'all'
-                                : targetValue == 'employee'
-                                ? 'employee'
-                                : 'faculty';
-                            targetFacultyId = targetType == 'faculty'
-                                ? int.tryParse(
-                                    targetValue.replaceFirst('faculty:', ''),
-                                  )
-                                : null;
-                          });
-                        },
-                      )
-                    else
-                      InputDecorator(
-                        decoration: const InputDecoration(labelText: 'คณะ'),
-                        child: Text(
-                          facultyOptions
-                                  .where(
-                                    (Faculty item) => item.id == user.facultyId,
-                                  )
-                                  .firstOrNull
-                                  ?.name ??
-                              'คณะของผู้ใช้',
+                        onChanged: (String? value) =>
+                            setDialogState(() => priority = value ?? priority),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: DropdownButtonFormField<String>(
+                        initialValue: status,
+                        decoration: const InputDecoration(labelText: 'สถานะ'),
+                        items: <DropdownMenuItem<String>>[
+                          if (canSelectPublishedStatus)
+                            const DropdownMenuItem(
+                              value: 'published',
+                              child: Text('เผยแพร่แล้ว'),
+                            ),
+                          const DropdownMenuItem(
+                            value: 'pending',
+                            child: Text('รออนุมัติ'),
+                          ),
+                          const DropdownMenuItem(
+                            value: 'draft',
+                            child: Text('ฉบับร่าง'),
+                          ),
+                        ],
+                        onChanged: (String? value) =>
+                            setDialogState(() => status = value ?? status),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 14),
+                if (canSelectFaculties)
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: <Widget>[
+                      const Text(
+                        'หมวดหมู่ข่าว',
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                          color: Color(0xFF433F36),
                         ),
                       ),
-                    const SizedBox(height: 14),
-                    _DateTimePickerField(
-                      controller: expiredAt,
-                      label: 'วันหมดอายุ',
-                    ),
-                  ],
-                ),
-                footer: Row(
-                  mainAxisAlignment: MainAxisAlignment.end,
-                  children: <Widget>[
-                    OutlinedButton(
-                      onPressed: () => Navigator.of(context).pop(),
-                      child: const Text('ยกเลิก'),
-                    ),
-                    const SizedBox(width: 10),
-                    FilledButton.icon(
-                      onPressed: () {
-                        if (title.text.trim().isEmpty ||
-                            content.text.trim().isEmpty) {
-                          return;
-                        }
-                        Navigator.of(context).pop(
-                          AnnouncementEditorResult(
-                            announcement: Announcement(
-                              id: existing?.id ?? 0,
-                              title: title.text.trim(),
-                              summary: summary.text.trim(),
-                              content: content.text.trim(),
-                              author: existing?.author ?? user.name,
-                              status: status,
-                              priority: priority,
-                              targetType: targetType,
-                              targetFacultyId: targetFacultyId,
-                              targetFacultyName: targetType == 'employee'
-                                  ? 'พนักงาน'
-                                  : (facultyOptions
-                                            .where(
-                                              (Faculty item) =>
-                                                  item.id == targetFacultyId,
-                                            )
-                                            .firstOrNull
-                                            ?.name ??
-                                        'ทุกคน'),
-                              createdAt: existing?.createdAt ?? '-',
-                              updatedAt: DateTime.now().toIso8601String(),
-                              expiredAt: expiredAt.text.trim().isEmpty
-                                  ? '-'
-                                  : expiredAt.text.trim(),
-                              attachments:
-                                  existing?.attachments ??
-                                  const <AnnouncementAttachment>[],
+                      const SizedBox(height: 8),
+                      Container(
+                        decoration: BoxDecoration(
+                          border: Border.all(color: const Color(0xFFD0D0D0)),
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                        padding: const EdgeInsets.all(12),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: <Widget>[
+                            if (canSelectAudience) ...<Widget>[
+                              _RadioButton(
+                                label: 'ทุกคน',
+                                value: 'all',
+                                groupValue: targetValue,
+                                onChanged: (String? value) {
+                                  setDialogState(() {
+                                    targetValue = 'all';
+                                    targetType = 'all';
+                                    targetFacultyId = null;
+                                    targetFacultyIds = <int>[];
+                                  });
+                                },
+                              ),
+                              const SizedBox(height: 12),
+                              _RadioButton(
+                                label: 'พนักงาน',
+                                value: 'employee',
+                                groupValue: targetValue,
+                                onChanged: (String? value) {
+                                  setDialogState(() {
+                                    targetValue = 'employee';
+                                    targetType = 'employee';
+                                    targetFacultyId = null;
+                                    targetFacultyIds = <int>[];
+                                  });
+                                },
+                              ),
+                              const SizedBox(height: 12),
+                              _RadioButton(
+                                label: 'อาจารย์ตามคณะ',
+                                value: 'teacher:multiple',
+                                groupValue: targetValue,
+                                onChanged: (String? value) {
+                                  setDialogState(() {
+                                    targetValue = 'teacher:multiple';
+                                    targetType = 'teacher';
+                                    if (targetFacultyIds.isEmpty) {
+                                      targetFacultyId = null;
+                                    }
+                                  });
+                                },
+                              ),
+                              const SizedBox(height: 12),
+                            ],
+                            _RadioButton(
+                              label: 'เลือกคณะ',
+                              value: 'faculty:multiple',
+                              groupValue: targetValue,
+                              onChanged: (String? value) {
+                                setDialogState(() {
+                                  targetValue = 'faculty:multiple';
+                                  targetType = 'faculty';
+                                  if (targetFacultyIds.isEmpty) {
+                                    targetFacultyId = null;
+                                  }
+                                });
+                              },
                             ),
-                            imageAttachments: selectedImages
-                                .map(PickedAnnouncementAttachment.fromXFile)
-                                .toList(),
-                            fileAttachments: selectedFiles,
-                            clearExistingImages: clearExistingImages,
-                            clearExistingFiles: clearExistingFiles,
-                          ),
-                        );
-                      },
-                      icon: const Icon(Icons.save_outlined),
-                      label: Text(existing == null ? 'สร้างข่าว' : 'บันทึก'),
+                            if (targetValue == 'faculty:multiple' ||
+                                targetValue == 'teacher:multiple') ...<Widget>[
+                              const SizedBox(height: 12),
+                              Container(
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFFF5F5F5),
+                                  borderRadius: BorderRadius.circular(4),
+                                ),
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 12,
+                                  vertical: 8,
+                                ),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: facultyOptions.map((
+                                    Faculty faculty,
+                                  ) {
+                                    final bool isTeacherFaculty =
+                                        user.isTeacher &&
+                                        faculty.id == user.facultyId;
+                                    final bool isSelected =
+                                        isTeacherFaculty ||
+                                        targetFacultyIds.contains(faculty.id);
+                                    return Padding(
+                                      padding: const EdgeInsets.only(bottom: 8),
+                                      child: _CheckBoxTile(
+                                        label: faculty.name,
+                                        value: isSelected,
+                                        onChanged: (bool? checked) {
+                                          setDialogState(() {
+                                            if (isTeacherFaculty &&
+                                                checked != true) {
+                                              return;
+                                            }
+                                            if (checked == true) {
+                                              if (!targetFacultyIds.contains(
+                                                faculty.id,
+                                              )) {
+                                                targetFacultyIds.add(
+                                                  faculty.id,
+                                                );
+                                              }
+                                            } else {
+                                              targetFacultyIds.removeWhere(
+                                                (int id) => id == faculty.id,
+                                              );
+                                            }
+                                          });
+                                        },
+                                      ),
+                                    );
+                                  }).toList(),
+                                ),
+                              ),
+                            ] else if (targetValue.startsWith('faculty:') &&
+                                targetValue != 'faculty:multiple') ...<Widget>[
+                              const SizedBox(height: 12),
+                              Container(
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFFF5F5F5),
+                                  borderRadius: BorderRadius.circular(4),
+                                ),
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 12,
+                                  vertical: 8,
+                                ),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: facultyOptions.map((
+                                    Faculty faculty,
+                                  ) {
+                                    final bool isSelected =
+                                        targetValue == 'faculty:${faculty.id}';
+                                    return Padding(
+                                      padding: const EdgeInsets.only(bottom: 8),
+                                      child: _CheckBoxTile(
+                                        label: faculty.name,
+                                        value: isSelected,
+                                        onChanged: (bool? checked) {
+                                          setDialogState(() {
+                                            if (checked == true) {
+                                              targetValue =
+                                                  'faculty:${faculty.id}';
+                                              targetFacultyId = faculty.id;
+                                              targetFacultyIds = <int>[
+                                                faculty.id,
+                                              ];
+                                            }
+                                          });
+                                        },
+                                      ),
+                                    );
+                                  }).toList(),
+                                ),
+                              ),
+                            ],
+                          ],
+                        ),
+                      ),
+                    ],
+                  )
+                else
+                  InputDecorator(
+                    decoration: const InputDecoration(labelText: 'คณะ'),
+                    child: Text(
+                      facultyOptions
+                              .where(
+                                (Faculty item) => item.id == user.facultyId,
+                              )
+                              .firstOrNull
+                              ?.name ??
+                          'คณะของผู้ใช้',
                     ),
-                  ],
+                  ),
+                const SizedBox(height: 14),
+                _DateTimePickerField(
+                  controller: expiredAt,
+                  label: 'วันหมดอายุ',
                 ),
-              );
-            },
+              ],
+            ),
+            footer: Row(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: <Widget>[
+                OutlinedButton(
+                  onPressed: () => Navigator.of(context).pop(),
+                  child: const Text('ยกเลิก'),
+                ),
+                const SizedBox(width: 10),
+                FilledButton.icon(
+                  onPressed: () {
+                    if (title.text.trim().isEmpty ||
+                        content.text.trim().isEmpty) {
+                      return;
+                    }
+                    if ((targetType == 'faculty' || targetType == 'teacher') &&
+                        targetFacultyIds.isEmpty) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('กรุณาเลือกคณะอย่างน้อย 1 คณะ'),
+                        ),
+                      );
+                      return;
+                    }
+                    final List<String> targetFacultyNames = facultyOptions
+                        .where(
+                          (Faculty item) => targetFacultyIds.contains(item.id),
+                        )
+                        .map((Faculty item) => item.name)
+                        .toList();
+                    Navigator.of(context).pop(
+                      AnnouncementEditorResult(
+                        announcement: Announcement(
+                          id: existing?.id ?? 0,
+                          title: title.text.trim(),
+                          summary: summary.text.trim(),
+                          content: content.text.trim(),
+                          author: existing?.author ?? user.name,
+                          status: status,
+                          priority: priority,
+                          targetType: targetType,
+                          targetFacultyId: targetFacultyIds.isNotEmpty
+                              ? targetFacultyIds.first
+                              : targetFacultyId,
+                          targetFacultyIds: targetFacultyIds,
+                          targetFacultyNames: targetFacultyNames,
+                          targetFacultyName: targetType == 'employee'
+                              ? 'พนักงาน'
+                              : targetType == 'all'
+                              ? 'ทุกคน'
+                              : targetFacultyIds.isNotEmpty
+                              ? facultyOptions
+                                    .where(
+                                      (Faculty item) =>
+                                          targetFacultyIds.contains(item.id),
+                                    )
+                                    .map((Faculty item) => item.name)
+                                    .join(', ')
+                              : (facultyOptions
+                                        .where(
+                                          (Faculty item) =>
+                                              item.id == targetFacultyId,
+                                        )
+                                        .firstOrNull
+                                        ?.name ??
+                                    'ทุกคน'),
+                          createdAt: existing?.createdAt ?? '-',
+                          updatedAt: DateTime.now().toIso8601String(),
+                          expiredAt: expiredAt.text.trim().isEmpty
+                              ? '-'
+                              : expiredAt.text.trim(),
+                          attachments:
+                              existing?.attachments ??
+                              const <AnnouncementAttachment>[],
+                        ),
+                        imageAttachments: selectedImages
+                            .map(PickedAnnouncementAttachment.fromXFile)
+                            .toList(),
+                        fileAttachments: selectedFiles,
+                        clearExistingImages: clearExistingImages,
+                        clearExistingFiles: clearExistingFiles,
+                      ),
+                    );
+                  },
+                  icon: const Icon(Icons.save_outlined),
+                  label: Text(existing == null ? 'สร้างข่าว' : 'บันทึก'),
+                ),
+              ],
+            ),
+          );
+        },
       );
     },
   );
@@ -2137,7 +2317,8 @@ String _formatEditorDateTime(DateTime value) {
 }
 
 bool _isImageUrl(String url) {
-  final String path = Uri.tryParse(url)?.path.toLowerCase() ?? url.toLowerCase();
+  final String path =
+      Uri.tryParse(url)?.path.toLowerCase() ?? url.toLowerCase();
   return path.endsWith('.jpg') ||
       path.endsWith('.jpeg') ||
       path.endsWith('.png') ||
@@ -2145,4 +2326,70 @@ bool _isImageUrl(String url) {
       path.endsWith('.webp') ||
       path.endsWith('.bmp') ||
       path.endsWith('.svg');
+}
+
+class _RadioButton extends StatelessWidget {
+  const _RadioButton({
+    required this.label,
+    required this.value,
+    required this.groupValue,
+    required this.onChanged,
+  });
+
+  final String label;
+  final String value;
+  final String groupValue;
+  final ValueChanged<String?> onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    final bool selected = value == groupValue;
+    return InkWell(
+      onTap: () => onChanged(value),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 6),
+        child: Row(
+          children: <Widget>[
+            Icon(
+              selected
+                  ? Icons.radio_button_checked_rounded
+                  : Icons.radio_button_unchecked_rounded,
+              color: selected
+                  ? const Color(0xFF4E5F9E)
+                  : const Color(0xFF777267),
+            ),
+            const SizedBox(width: 10),
+            Expanded(child: Text(label, style: const TextStyle(fontSize: 14))),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _CheckBoxTile extends StatelessWidget {
+  const _CheckBoxTile({
+    required this.label,
+    required this.value,
+    required this.onChanged,
+  });
+
+  final String label;
+  final bool value;
+  final ValueChanged<bool?> onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: <Widget>[
+        Checkbox(value: value, onChanged: onChanged),
+        Expanded(
+          child: GestureDetector(
+            onTap: () => onChanged(!value),
+            child: Text(label, style: const TextStyle(fontSize: 14)),
+          ),
+        ),
+      ],
+    );
+  }
 }

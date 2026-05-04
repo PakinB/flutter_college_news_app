@@ -58,6 +58,26 @@ INSERT INTO `announcements` (`id`, `title`, `content`, `summary`, `created_by`, 
 -- --------------------------------------------------------
 
 --
+-- Table structure for table `announcement_faculties`
+--
+
+CREATE TABLE `announcement_faculties` (
+  `announcement_id` int(11) NOT NULL,
+  `faculty_id` int(11) NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dumping data for table `announcement_faculties`
+--
+
+INSERT INTO `announcement_faculties` (`announcement_id`, `faculty_id`) VALUES
+(12, 1),
+(13, 2),
+(14, 7);
+
+-- --------------------------------------------------------
+
+--
 -- Table structure for table `attachments`
 --
 
@@ -179,6 +199,13 @@ ALTER TABLE `announcements`
   ADD KEY `fk_announcement_faculty` (`target_faculty_id`);
 
 --
+-- Indexes for table `announcement_faculties`
+--
+ALTER TABLE `announcement_faculties`
+  ADD PRIMARY KEY (`announcement_id`, `faculty_id`),
+  ADD KEY `idx_announcement_faculties_faculty` (`faculty_id`);
+
+--
 -- Indexes for table `attachments`
 --
 ALTER TABLE `attachments`
@@ -251,6 +278,13 @@ ALTER TABLE `users`
 ALTER TABLE `announcements`
   ADD CONSTRAINT `fk_announcement_creator` FOREIGN KEY (`created_by`) REFERENCES `users` (`id`),
   ADD CONSTRAINT `fk_announcement_faculty` FOREIGN KEY (`target_faculty_id`) REFERENCES `faculties` (`id`);
+
+--
+-- Constraints for table `announcement_faculties`
+--
+ALTER TABLE `announcement_faculties`
+  ADD CONSTRAINT `fk_announcement_faculties_announcement` FOREIGN KEY (`announcement_id`) REFERENCES `announcements` (`id`) ON DELETE CASCADE,
+  ADD CONSTRAINT `fk_announcement_faculties_faculty` FOREIGN KEY (`faculty_id`) REFERENCES `faculties` (`id`) ON DELETE CASCADE;
 
 --
 -- Constraints for table `attachments`
