@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_booking/dashboard.dart';
+import 'package:flutter_booking/config/api_config.dart';
 import 'package:flutter_booking/models/app_user.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'register.dart';
 
-const _loginApiUrl =
-    'http://localhost/flutter_college_news_app/php_api/auth/login.php';
+final _loginApiUrl = apiUrl('auth/login.php');
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});

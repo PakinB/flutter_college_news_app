@@ -6,13 +6,6 @@ $method = $_SERVER["REQUEST_METHOD"];
 $id = get_query_int("id");
 $announcement_id = get_query_int("announcement_id");
 
-function public_image_url($file_name) {
-    $scheme = (!empty($_SERVER["HTTPS"]) && $_SERVER["HTTPS"] !== "off") ? "https" : "http";
-    $host = $_SERVER["HTTP_HOST"];
-    $base_path = rtrim(dirname(dirname($_SERVER["SCRIPT_NAME"])), "/\\");
-    return "$scheme://$host$base_path/images/$file_name";
-}
-
 function delete_announcement_image_files($conn, $announcement_id) {
     $stmt = $conn->prepare(
         "SELECT id, file_url
@@ -78,7 +71,9 @@ if ($method === "GET") {
             send_json(["status" => "error", "message" => "Attachment not found"], 404);
         }
 
-        send_json(["status" => "success", "data" => $attachment]);
+        $attachments = [$attachment];
+        normalize_attachment_urls($attachments);
+        send_json(["status" => "success", "data" => $attachments[0]]);
     }
 
     if ($announcement_id) {
@@ -90,7 +85,9 @@ if ($method === "GET") {
         );
         $stmt->bind_param("i", $announcement_id);
         $stmt->execute();
-        send_json(["status" => "success", "data" => db_fetch_all($stmt->get_result())]);
+        $attachments = db_fetch_all($stmt->get_result());
+        normalize_attachment_urls($attachments);
+        send_json(["status" => "success", "data" => $attachments]);
     }
 
     $result = $conn->query(
@@ -98,7 +95,9 @@ if ($method === "GET") {
          FROM attachments
          ORDER BY uploaded_at DESC"
     );
-    send_json(["status" => "success", "data" => db_fetch_all($result)]);
+    $attachments = db_fetch_all($result);
+    normalize_attachment_urls($attachments);
+    send_json(["status" => "success", "data" => $attachments]);
 }
 
 if ($method === "POST") {
@@ -166,7 +165,7 @@ if ($method === "POST") {
             send_json(["status" => "error", "message" => "Could not save uploaded file"], 500);
         }
 
-        $file_url = public_image_url($file_name);
+        $file_url = uploaded_file_storage_path($file_name);
         $stmt = $conn->prepare(
             "INSERT INTO attachments (announcement_id, file_url, file_type)
              VALUES (?, ?, ?)"
@@ -180,7 +179,7 @@ if ($method === "POST") {
         send_json([
             "status" => "success",
             "id" => $stmt->insert_id,
-            "file_url" => $file_url
+            "file_url" => public_uploaded_file_url($file_name)
         ], 201);
     }
 

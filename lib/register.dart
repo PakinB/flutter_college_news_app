@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'dart:convert';
+import 'package:flutter_booking/config/api_config.dart';
 import 'package:http/http.dart' as http;
 
-const _registerApiUrl =
-    'http://localhost/flutter_college_news_app/php_api/auth/register.php';
+final _registerApiUrl = apiUrl('auth/register.php');
 
 class RegisterPage extends StatefulWidget {
   const RegisterPage({super.key});
