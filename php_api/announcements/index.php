@@ -26,7 +26,9 @@ function attach_announcement_files($conn, &$announcements) {
     $stmt->execute();
 
     $attachments_by_announcement = [];
-    foreach (db_fetch_all($stmt->get_result()) as $attachment) {
+    $attachments = db_fetch_all($stmt->get_result());
+    normalize_attachment_urls($attachments);
+    foreach ($attachments as $attachment) {
         $announcement_id = (int)$attachment["announcement_id"];
         if (!isset($attachments_by_announcement[$announcement_id])) {
             $attachments_by_announcement[$announcement_id] = [];
@@ -178,6 +180,7 @@ if ($method === "GET") {
         $attachments_stmt->bind_param("i", $id);
         $attachments_stmt->execute();
         $announcement["attachments"] = db_fetch_all($attachments_stmt->get_result());
+        normalize_attachment_urls($announcement["attachments"]);
         $announcement_list = [$announcement];
         attach_announcement_faculties($conn, $announcement_list);
         $announcement = $announcement_list[0];

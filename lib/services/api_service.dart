@@ -3,10 +3,9 @@ import 'dart:typed_data';
 
 import 'package:http/http.dart' as http;
 
+import '../config/api_config.dart';
 import '../models/announcement.dart';
 import '../models/faculty.dart';
-
-const apiBaseUrl = 'http://localhost/flutter_college_news_app/php_api';
 
 class ApiService {
   const ApiService();
